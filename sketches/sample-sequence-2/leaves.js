@@ -95,7 +95,7 @@ export default class Leaves {
     const canvasWidth = this.ctx.canvas.width;
     const canvasHeight = this.ctx.canvas.height;
 
-    const scale = 1.5; // Use the same scale as your rendered SVG
+    const scale = 2.5; // Use the same scale as your rendered SVG
     const imgSizeX = 500 * scale; // Original SVG width
     const imgSizeY = 500 * scale; // Original SVG height
 

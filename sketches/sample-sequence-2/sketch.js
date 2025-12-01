@@ -27,7 +27,7 @@ const rotationSpring = new Spring({
 
 let fallPos = 0;
 let fallVel = 0;
-const numberLeaves = 300;
+const numberLeaves = 700;
 let leaves = [];
 let randomNumbers = [];
 let leavesInitialized = false;
