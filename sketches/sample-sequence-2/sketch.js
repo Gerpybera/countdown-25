@@ -1,41 +1,55 @@
-import { createEngine } from "../_shared/engine.js"
-import { Spring } from "../_shared/spring.js"
+import { createEngine } from "../_shared/engine.js";
+import { Spring } from "../_shared/spring.js";
+import Leaves from "./leaves.js";
 
-const { renderer, input, math, run, finish } = createEngine()
-const { ctx, canvas } = renderer
-run(update)
+const { renderer, input, math, run, finish } = createEngine();
+const { ctx, canvas } = renderer;
+
+run(update);
 
 const ySpring = new Spring({
   position: -canvas.height,
   target: 0,
   frequency: 1.5,
-  halfLife: 0.05
-})
+  halfLife: 0.05,
+});
 const scaleSpring = new Spring({
   position: 1,
   frequency: 1.5,
-  halfLife: 0.1
-})
+  halfLife: 0.1,
+});
 const rotationSpring = new Spring({
   position: 180,
   frequency: 0.5,
   halfLife: 0.805,
-  wrap: 360
-})
+  wrap: 360,
+});
 
-let fallPos = 0
-let fallVel = 0
+let fallPos = 0;
+let fallVel = 0;
+const numberLeaves = 300;
+let leaves = [];
+let randomNumbers = [];
+let leavesInitialized = false;
+
+// Generate random positions once
+for (let i = 0; i < numberLeaves; i++) {
+  randomNumbers.push({
+    posX: Math.random() * canvas.width,
+    posY: Math.random() * canvas.height,
+  });
+}
 
 const State = {
   WaitingForInput: "waitingForInput",
   Interactive: "interactive",
   Falling: "falling",
-  Finished: "finished"
-}
-let currentState = State.WaitingForInput
-let startInputX = 0
-
+  Finished: "finished",
+};
+let currentState = State.WaitingForInput;
+let startInputX = 0;
 function update(dt) {
+  /*
 
 
 
@@ -97,14 +111,32 @@ function update(dt) {
 
   ySpring.step(dt)
   scaleSpring.step(dt)
+  */
 
   const x = canvas.width / 2;
   const y = canvas.height / 2 + fallPos;
-  const rot = rotationSpring.position
-  const scale = scaleSpring.position
+  const rot = rotationSpring.position;
+  const scale = scaleSpring.position;
 
-  ctx.fillStyle = "black"
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Create leaves only once
+  if (!leavesInitialized) {
+    for (let i = 0; i < randomNumbers.length; i++) {
+      const { posX, posY } = randomNumbers[i];
+      leaves.push(new Leaves(ctx, input, posX, posY));
+    }
+    leavesInitialized = true;
+  }
+
+  // Update and draw all leaves
+  for (let i = 0; i < leaves.length; i++) {
+    leaves[i].update();
+    leaves[i].draw();
+  }
+
+  /*
 
 
   ctx.fillStyle = "white"
@@ -115,6 +147,6 @@ function update(dt) {
   ctx.rotate(math.toRadian(rot))
   ctx.scale(scale, scale)
   ctx.fillText("2", 0, 0)
-
-
+  
+*/
 }
