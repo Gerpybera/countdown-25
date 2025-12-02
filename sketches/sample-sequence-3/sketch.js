@@ -1,9 +1,11 @@
 import { createEngine } from "../_shared/engine.js";
 import { Spring } from "../_shared/spring.js";
 import Tomato from "./tomato.js";
+import TomatoTrace from "./tomato-trace.js";
 
 const { renderer, input, math, run, finish } = createEngine();
-const { ctx, canvas } = renderer;
+console.log(input);
+const { ctx, ctx2, canvas } = renderer;
 run(update);
 
 const spring = new Spring({
@@ -20,10 +22,18 @@ svgImage.onload = () => {
 
 let tomato = [];
 let stuckTomatoCount = 0;
-const limiteStuckTomatoes = 400;
+const limiteStuckTomatoes = 50;
 
 function update(dt) {
+  /*
   if (input.isPressed()) {
+    spring.target = 0;
+    tomato.push(new Tomato(ctx, input));
+  } else {
+    spring.target = 1;
+  }
+  */
+  if (input.isDown()) {
     spring.target = 0;
     tomato.push(new Tomato(ctx, input));
   } else {
@@ -40,19 +50,6 @@ function update(dt) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Update and draw the tomato
-  //tomato.forEach((t) => t.update());
-
-  /*
-  ctx.save();
-  ctx.fillStyle = "white";
-  ctx.textBaseline = "middle";
-  ctx.font = `${canvas.height}px Helvetica Neue, Helvetica , bold`;
-  ctx.textAlign = "center";
-  ctx.translate(x, y);
-  ctx.scale(scale, scale);
-  ctx.fillText("3", 0, 0);
-  ctx.restore();
-  */
   tomato.forEach((t) => {
     t.update();
     if (t.posY - t.size > canvas.height) {

@@ -27,10 +27,11 @@ const rotationSpring = new Spring({
 
 let fallPos = 0;
 let fallVel = 0;
-const numberLeaves = 700;
+const numberLeaves = 2000;
 let leaves = [];
 let randomNumbers = [];
 let leavesInitialized = false;
+let shouldStartFalling = false;
 
 // Generate random positions once
 for (let i = 0; i < numberLeaves; i++) {
@@ -49,70 +50,6 @@ const State = {
 let currentState = State.WaitingForInput;
 let startInputX = 0;
 function update(dt) {
-  /*
-
-
-
-  let nextState = undefined
-  switch (currentState) {
-    case State.WaitingForInput: {
-
-      if (input.hasStarted()) {
-        startInputX = input.getX()
-        nextState = State.Interactive
-      }
-      break
-    }
-
-    case State.Interactive: {
-      const xOffset = input.getX() - startInputX
-      rotationSpring.target = math.map(xOffset, 0, canvas.width, 0, 360) + 180
-      rotationSpring.step(dt)
-      if (Math.abs(math.deltaAngleDeg(rotationSpring.position, 0)) < 5 && Math.abs(rotationSpring.velocity, 0) < 10)
-        nextState = State.Falling
-      break
-    }
-
-    case State.Falling: {
-      const drag = 0.1
-      const gravity = canvas.height * 3
-      const rotationForce = 200 * Math.sign(rotationSpring.velocity)
-      rotationSpring.velocity += rotationForce * dt;
-      rotationSpring.velocity *= Math.exp(-dt * drag)
-      rotationSpring.position += rotationSpring.velocity * dt
-      fallVel += gravity * dt;
-      fallPos += fallVel * dt;
-      if (fallPos > canvas.height)
-        nextState = State.Finished
-      break
-    }
-
-    case State.Finished: {
-      break
-    }
-  }
-
-  if (nextState !== undefined) {
-
-    currentState = nextState
-    switch (currentState) {
-      case State.Finished:
-
-        finish()
-        break;
-      case State.Falling:
-
-        scaleSpring.target = 1.2
-        break;
-    }
-    // change state
-  }
-
-
-  ySpring.step(dt)
-  scaleSpring.step(dt)
-  */
-
   const x = canvas.width / 2;
   const y = canvas.height / 2 + fallPos;
   const rot = rotationSpring.position;
@@ -134,6 +71,26 @@ function update(dt) {
   for (let i = 0; i < leaves.length; i++) {
     leaves[i].update();
     leaves[i].draw();
+  }
+  //if all of my leaves have their isInsideArea to true, I can finish the sequence
+  const allLeavesInside = leaves.every((leaf) => leaf.isInsideArea);
+  if (allLeavesInside && currentState !== State.Finished) {
+    currentState = State.Finished;
+    shouldStartFalling = true;
+
+    console.log("All leaves are inside the SVG area. Finishing sequence.");
+    //finish();
+    // You can add any additional logic here for when the sequence finishes
+  }
+  if (shouldStartFalling) {
+    setTimeout(() => {
+      leaves.forEach((leaf) => {
+        leaf.falloffOffset();
+        if (leaf.posY > canvas.height + leaf.size) {
+          leaves.splice(leaves.indexOf(leaf), 1);
+        }
+      });
+    }, 1000);
   }
 
   /*

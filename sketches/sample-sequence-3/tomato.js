@@ -10,14 +10,28 @@ export default class Tomato {
     this.posX = this.input.getX();
     this.posY = this.input.getY();
     this.randomSizeOffset = Math.random() * 50 - 20;
-    this.imgSize = 125 + this.randomSizeOffset;
+    this.imgSize = 200 + this.randomSizeOffset;
     this.tomatoSprite = "./assets/PNG/tomato.png";
     this.splashSprite = "./assets/PNG/splash.png";
-    this.splashSize = 75 + this.randomSizeOffset;
+    this.splashSize = this.imgSize - 50 + this.randomSizeOffset;
     this.isCounted = false;
+    this.isMoving = false;
     this.wasStickingBefore = false;
+    this.velocity = 0;
+    this.isPlayingSplash = true;
+    this.preload();
     //const svgPath = new Path2D(svgPathData);
     this.setup();
+  }
+  preload() {
+    this.splashSFX = new Audio("./assets/AUDIO/splash.wav");
+    //this.throwSFX = new Audio("./assets/AUDIO/throw.mp3");
+  }
+  playSounds() {
+    if (this.isSticking && this.isPlayingSplash) {
+      this.splashSFX.play();
+      this.isPlayingSplash = false;
+    }
   }
   setup() {
     this.color = "red";
@@ -36,6 +50,7 @@ export default class Tomato {
     );
 
     this.createTomato(this.posX, this.posY);
+    this.playSounds();
   }
 
   wasJustThrownInside() {
@@ -111,7 +126,7 @@ export default class Tomato {
     const canvasWidth = this.ctx.canvas.width;
     const canvasHeight = this.ctx.canvas.height;
 
-    const scale = 1.5; // Use the same scale as your rendered SVG
+    const scale = 2; // Use the same scale as your rendered SVG
     const imgSizeX = 500 * scale; // Original SVG width
     const imgSizeY = 500 * scale; // Original SVG height
 
@@ -131,7 +146,12 @@ export default class Tomato {
   }
   slideDown() {
     if (this.isSticking && !this.isInsideArea) {
-      this.posY += 5;
+      this.isMoving = true;
+      this.posY += this.velocity;
+      this.velocity += 0.1; // Increment velocity each frame
+    } else {
+      this.isMoving = false;
+      this.velocity = 0; // Reset velocity when not moving
     }
   }
 }

@@ -6,12 +6,43 @@ export default class Leaves {
     this.input = input;
     this.posX = x || ctx.canvas.width / 2;
     this.posY = y || ctx.canvas.height / 2;
+    this.size = 50 + Math.random() * 20 - 10;
     this.mouseX = this.input.getX();
     this.mouseY = this.input.getY();
     this.isInRange = false;
-    this.rangeDetection = 500;
-    this.blowAwaySpeed = 5;
+    this.affectedByMouse = true;
+    this.rangeDetection = 400;
+    this.blowAwaySpeed = 15;
     this.isInsideArea = false;
+    this.imgPath = this.getfilePath();
+    this.leafIMG = new Image();
+    this.leafIMG.src = this.imgPath;
+    this.leafIMG.onload = () => {
+      console.log("Leaf image loaded successfully.");
+    };
+    this.randomAngle = Math.random() * Math.PI * 2;
+    this.isBounderiesAffected = true;
+    this.fallOffDelay = Math.random() * 1; // Random delay between 0-1 seconds
+    this.timeSinceFallOff = 0;
+    this.isFallingOff = false;
+  }
+
+  getfilePath() {
+    const randomChoice = Math.floor(Math.random() * 5);
+    switch (randomChoice) {
+      case 0:
+        return "./assets/PNG/leaf.png";
+      case 1:
+        return "./assets/PNG/leaf2.png";
+      case 2:
+        return "./assets/PNG/leaf3.png";
+      case 3:
+        return "./assets/PNG/leaf4.png";
+      case 4:
+        return "./assets/PNG/leaf5.png";
+      default:
+        return "./assets/PNG/leaf.png";
+    }
   }
 
   update() {
@@ -24,18 +55,24 @@ export default class Leaves {
       new Path2D(d)
     );
     this.detectRange();
-    this.blowAway();
+    if (this.affectedByMouse) {
+      this.blowAway();
+    }
   }
 
   draw() {
-    if (this.isInRange) {
-      this.ctx.fillStyle = "red";
-    } else {
-      this.ctx.fillStyle = "green";
-    }
-    this.ctx.beginPath();
-    this.ctx.ellipse(this.posX, this.posY, 10, 30, Math.PI / 4, 0, Math.PI * 2);
-    this.ctx.fill();
+    this.ctx.save();
+    this.ctx.translate(this.posX, this.posY);
+    this.ctx.rotate(this.randomAngle);
+    this.ctx.translate(-this.posX, -this.posY);
+    this.ctx.drawImage(
+      this.leafIMG,
+      this.posX - this.size,
+      this.posY - this.size,
+      this.size * 2,
+      this.size * 2
+    );
+    this.ctx.restore();
   }
 
   mouseVisual() {
@@ -72,6 +109,8 @@ export default class Leaves {
 
   handleBoundaries() {
     const padding = 20; // Distance from edge before bouncing
+
+    if (this.isBounderiesAffected === false) return;
 
     // Bounce off left and right edges
     if (this.posX < padding) {
@@ -112,5 +151,22 @@ export default class Leaves {
     this.ctx.restore();
 
     return isInside;
+  }
+  falloff() {
+    this.isBounderiesAffected = false;
+    this.affectedByMouse = false;
+    this.posY += 5 + Math.random() * 2;
+  }
+  falloffOffset() {
+    if (this.isInsideArea && !this.isFallingOff) {
+      this.timeSinceFallOff += 0.016; // Approximate delta time (60fps)
+      if (this.timeSinceFallOff >= this.fallOffDelay) {
+        this.isFallingOff = true;
+      }
+    }
+
+    if (this.isFallingOff) {
+      this.falloff();
+    }
   }
 }
