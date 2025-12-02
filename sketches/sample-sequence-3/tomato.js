@@ -1,9 +1,10 @@
 import { d } from "./svg.js";
 
 export default class Tomato {
-  constructor(ctx, input) {
+  constructor(ctx, input, globalTraces) {
     this.ctx = ctx;
     this.input = input;
+    this.globalTraces = globalTraces; // Reference to global traces array
     this.isSticking = false;
     this.isbeingThrown = false;
     this.isInsideArea = false;
@@ -14,6 +15,7 @@ export default class Tomato {
     this.tomatoSprite = "./assets/PNG/tomato.png";
     this.splashSprite = "./assets/PNG/splash.png";
     this.splashSize = this.imgSize - 50 + this.randomSizeOffset;
+    this.traces = [];
     this.isCounted = false;
     this.isMoving = false;
     this.wasStickingBefore = false;
@@ -25,12 +27,20 @@ export default class Tomato {
   }
   preload() {
     this.splashSFX = new Audio("./assets/AUDIO/splash.wav");
+    this.slideSFX = new Audio("./assets/AUDIO/slide.wav");
     //this.throwSFX = new Audio("./assets/AUDIO/throw.mp3");
   }
   playSounds() {
     if (this.isSticking && this.isPlayingSplash) {
       this.splashSFX.play();
       this.isPlayingSplash = false;
+    }
+    if (this.isMoving) {
+      this.slideSFX.volume = 0.2;
+      this.slideSFX.play();
+    } else {
+      this.slideSFX.pause();
+      this.slideSFX.currentTime = 0;
     }
   }
   setup() {
@@ -48,6 +58,7 @@ export default class Tomato {
       this.posY,
       new Path2D(d)
     );
+    this.tomatoTrace();
 
     this.createTomato(this.posX, this.posY);
     this.playSounds();
@@ -147,11 +158,31 @@ export default class Tomato {
   slideDown() {
     if (this.isSticking && !this.isInsideArea) {
       this.isMoving = true;
+      this.posX += Math.random() * 2 - 1; // Slight horizontal movement
       this.posY += this.velocity;
       this.velocity += 0.1; // Increment velocity each frame
     } else {
       this.isMoving = false;
       this.velocity = 0; // Reset velocity when not moving
     }
+  }
+  tomatoTrace() {
+    if (!this.isMoving) return;
+    console.log("Creating tomato trace at:", this.posX, this.posY);
+
+    // Create a trace object with position, size, and opacity
+    const trace = {
+      x: this.posX,
+      y: this.posY,
+      size: this.size,
+      alpha: 0.01,
+    };
+
+    // Push the trace to the global traces array
+    this.globalTraces.push(trace);
+  }
+
+  drawTraces() {
+    // Traces are now stored globally, so this method is not needed anymore
   }
 }

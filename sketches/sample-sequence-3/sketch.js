@@ -1,11 +1,10 @@
 import { createEngine } from "../_shared/engine.js";
 import { Spring } from "../_shared/spring.js";
 import Tomato from "./tomato.js";
-import TomatoTrace from "./tomato-trace.js";
 
 const { renderer, input, math, run, finish } = createEngine();
 console.log(input);
-const { ctx, ctx2, canvas } = renderer;
+const { ctx, canvas } = renderer;
 run(update);
 
 const spring = new Spring({
@@ -23,6 +22,7 @@ svgImage.onload = () => {
 let tomato = [];
 let stuckTomatoCount = 0;
 const limiteStuckTomatoes = 50;
+let allTraces = []; // Global array to store all traces separately
 
 function update(dt) {
   /*
@@ -35,7 +35,7 @@ function update(dt) {
   */
   if (input.isDown()) {
     spring.target = 0;
-    tomato.push(new Tomato(ctx, input));
+    tomato.push(new Tomato(ctx, input, allTraces));
   } else {
     spring.target = 1;
   }
@@ -48,6 +48,15 @@ function update(dt) {
 
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw all traces from global array
+  allTraces.forEach((trace) => {
+    ctx.fillStyle = `rgba(255, 0, 0, ${trace.alpha})`;
+    ctx.beginPath();
+    ctx.arc(trace.x, trace.y, trace.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.closePath();
+  });
 
   // Update and draw the tomato
   tomato.forEach((t) => {
