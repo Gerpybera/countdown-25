@@ -36,7 +36,8 @@ export default class Tomato {
       this.isPlayingSplash = false;
     }
     if (this.isMoving) {
-      this.slideSFX.volume = 0.2;
+      // Map velocity (0 to ~10) to volume (0 to 1), capped at 1
+      this.slideSFX.volume = Math.min(this.velocity / 10, 1);
       this.slideSFX.play();
     } else {
       this.slideSFX.pause();
