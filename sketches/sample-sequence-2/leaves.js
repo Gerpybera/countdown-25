@@ -169,4 +169,16 @@ export default class Leaves {
       this.falloff();
     }
   }
+  drawSVGPath() {
+    this.ctx.save();
+    this.ctx.strokeStyle = "red";
+    this.ctx.lineWidth = 2;
+    this.ctx.translate(
+      this.ctx.canvas.width / 2 - (500 * 2.5) / 2,
+      this.ctx.canvas.height / 2 - (500 * 2.5) / 2
+    );
+    this.ctx.scale(2.5, 2.5);
+    this.ctx.stroke(new Path2D(d));
+    this.ctx.restore();
+  }
 }

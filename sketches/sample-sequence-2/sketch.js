@@ -1,6 +1,7 @@
 import { createEngine } from "../_shared/engine.js";
 import { Spring } from "../_shared/spring.js";
 import Leaves from "./leaves.js";
+import { d } from "./svg.js";
 
 const { renderer, input, math, run, finish } = createEngine();
 const { ctx, canvas } = renderer;
@@ -66,7 +67,9 @@ function update(dt) {
     }
     leavesInitialized = true;
   }
-
+  if (shouldStartFalling) {
+    drawSvgOutline();
+  }
   // Update and draw all leaves
   for (let i = 0; i < leaves.length; i++) {
     leaves[i].update();
@@ -79,7 +82,6 @@ function update(dt) {
     shouldStartFalling = true;
 
     console.log("All leaves are inside the SVG area. Finishing sequence.");
-    //finish();
     // You can add any additional logic here for when the sequence finishes
   }
   if (shouldStartFalling) {
@@ -91,6 +93,15 @@ function update(dt) {
         }
       });
     }, 1000);
+    if (leaves.length === 0) {
+      setTimeout(() => {
+        svgPosY += svgVelocity;
+        svgVelocity += 0.5;
+        if (svgPosY > canvas.height + 500 * 2.5) {
+          finish();
+        }
+      }, 1000);
+    }
   }
 
   /*
@@ -106,4 +117,21 @@ function update(dt) {
   ctx.fillText("2", 0, 0)
   
 */
+}
+
+let opacity = 0;
+let svgPosX = canvas.width / 2 - (500 * 2.5) / 2;
+let svgPosY = canvas.height / 2 - (500 * 2.5) / 2;
+let svgVelocity = 0;
+function drawSvgOutline() {
+  ctx.save();
+  if (opacity < 1) {
+    opacity += 0.01;
+  }
+  ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+  ctx.translate(svgPosX, svgPosY);
+  ctx.scale(2.5, 2.5);
+  const path = new Path2D(d);
+  ctx.fill(path);
+  ctx.restore();
 }
