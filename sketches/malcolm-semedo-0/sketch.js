@@ -94,8 +94,13 @@ function update(dt) {
   // Update physics for all objects
   updateSharedPhysics();
 
+  console.log("Total objects:", objects.length);
+
   objects.forEach((obj) => {
     obj.update();
+    if (obj.body.positionY - obj.size > canvas.height) {
+      objects.splice(objects.indexOf(obj), 1);
+    }
   });
 
   createLever();
