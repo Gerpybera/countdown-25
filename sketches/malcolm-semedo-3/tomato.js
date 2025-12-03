@@ -13,7 +13,9 @@ export default class Tomato {
     this.rotation = 0;
     this.rotationSpeed = Math.random(-1, 1) * 0.1;
     this.randomSizeOffset = Math.random() * 50 - 20;
-    this.imgSize = 200 + this.randomSizeOffset;
+    this.imgSize = this.ctx.canvas.width * 0.1; // Base size of the tomato image
+    this.imgGlobalSize = this.ctx.canvas.width * 0.6; // SVG display size
+    this.scale = 1;
 
     // Pick a random sprite from preloaded arrays
     this.randomSprite = Math.floor(
@@ -151,14 +153,13 @@ export default class Tomato {
     const canvasWidth = this.ctx.canvas.width;
     const canvasHeight = this.ctx.canvas.height;
 
-    const scale = 2; // Use the same scale as your rendered SVG
-    const imgSizeX = 500 * scale; // Original SVG width
-    const imgSizeY = 500 * scale; // Original SVG height
+    const svgOriginalSize = 500; // Original SVG path size
+    const scale = (this.imgGlobalSize * this.scale) / svgOriginalSize;
 
-    // Translate to center, then subtract half the SVG size
+    // Translate to center, then subtract half the final SVG size
     this.ctx.translate(
-      canvasWidth / 2 - imgSizeX / 2,
-      canvasHeight / 2 - imgSizeY / 2
+      canvasWidth / 2 - (this.imgGlobalSize * this.scale) / 2,
+      canvasHeight / 2 - (this.imgGlobalSize * this.scale) / 2
     );
     this.ctx.scale(scale, scale);
 

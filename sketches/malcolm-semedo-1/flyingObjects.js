@@ -6,6 +6,8 @@ export default class FlyingObject {
     this.ctx = ctx;
     this.input = input;
     this.svg = new Path2D(d);
+    this.imgGlobalSize = this.ctx.canvas.width * 0.5; // SVG display size
+    this.scale = 1;
 
     // Get target position inside SVG
     this.basePos = this.getRandomPointInsideSVG();
@@ -25,7 +27,7 @@ export default class FlyingObject {
     this.targetY = this.basePos.y;
     this.mouseX = this.input.getX();
     this.mouseY = this.input.getY();
-    this.size = 50;
+    this.size = this.ctx.canvas.width * 0.02;
     this.speedX = (Math.random() - 0.5) * 2;
     this.speedY = (Math.random() - 0.5) * 2;
     this.isHover = this.hoverCheck();
@@ -75,14 +77,14 @@ export default class FlyingObject {
   }
 
   getRandomPointInsideSVG() {
-    const scale = 2;
-    const svgOriginalSize = 500; // Original SVG size before scaling
+    const svgOriginalSize = 500; // Original SVG path size
+    const scale = (this.imgGlobalSize * this.scale) / svgOriginalSize;
     const canvasWidth = this.ctx.canvas.width;
     const canvasHeight = this.ctx.canvas.height;
 
-    // Offset where scaled SVG is drawn on canvas
-    const offsetX = canvasWidth / 2 - (svgOriginalSize * scale) / 2;
-    const offsetY = canvasHeight / 2 - (svgOriginalSize * scale) / 2;
+    // Offset where scaled SVG is drawn on canvas (centered)
+    const offsetX = canvasWidth / 2 - (this.imgGlobalSize * this.scale) / 2;
+    const offsetY = canvasHeight / 2 - (this.imgGlobalSize * this.scale) / 2;
 
     // Keep trying until we find a point inside the SVG
     for (let i = 0; i < 1000; i++) {
@@ -204,11 +206,24 @@ export default class FlyingObject {
   }
 
   goDifferentDirection() {
-    // Mark as hovered once touched
+    // Check if fly has stopped moving (reached target)
+    const hasStopped = this.getSpeed() < 0.5;
+
+    // Allow re-hover if fly has stopped moving
+    if (hasStopped && this.hasBeenHovered) {
+      this.hasBeenHovered = false;
+    }
+
+    // Mark as hovered once touched and set new target
     if (this.isHover && !this.hasBeenHovered) {
       this.hasBeenHovered = true;
-      this.targetX = (this.targetX - window.innerWidth / 2) * 150;
-      this.targetY = (this.targetY - window.innerHeight / 2) * 150;
+
+      // Pick a random direction to fly away
+      const angle = Math.random() * Math.PI * 2;
+      const distance = window.innerWidth * 2;
+
+      this.targetX = this.x + Math.cos(angle) * distance;
+      this.targetY = this.y + Math.sin(angle) * distance;
 
       this.targetX = math.clamp(
         this.targetX,

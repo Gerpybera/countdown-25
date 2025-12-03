@@ -42,7 +42,7 @@ for (let i = 0; i < NUM_SPRITES; i++) {
 
 let tomato = [];
 let stuckTomatoCount = 0;
-const limiteStuckTomatoes = 20;
+const limiteStuckTomatoes = 30;
 let allTraces = []; // Global array to store all traces separately
 let isTomatoThrowable = true;
 
@@ -96,7 +96,7 @@ function update(dt) {
     if (stuckTomatoCount >= limiteStuckTomatoes) {
       t.posY += 5;
       if (tomato.length === 0) {
-        cleanUpTraces();
+        finish();
       }
     }
   });
