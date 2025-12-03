@@ -45,6 +45,33 @@ export default class FlyingObject {
 
     // Use the preloaded video
     this.sprite = preloadedVideo;
+
+    // Sound variations - add more files here as needed
+    this.soundVariations = [
+      "./assets/AUDIO/flies-moving.wav",
+      "./assets/AUDIO/flies-moving2.wav",
+      "./assets/AUDIO/flies-moving3.wav",
+      "./assets/AUDIO/flies-moving4.wav",
+    ];
+
+    // Create individual audio for this fly with random sound
+    this.audio = new Audio();
+    this.pickRandomSound();
+    this.audio.volume = 0;
+
+    // When audio ends, reroll to a new random sound
+    this.audio.addEventListener("ended", () => {
+      this.pickRandomSound();
+      // Restart if still moving
+      if (this.isMoving()) {
+        this.audio.play().catch(() => {});
+      }
+    });
+  }
+
+  pickRandomSound() {
+    const randomIndex = Math.floor(Math.random() * this.soundVariations.length);
+    this.audio.src = this.soundVariations[randomIndex];
   }
 
   getRandomPointInsideSVG() {
@@ -180,8 +207,8 @@ export default class FlyingObject {
     // Mark as hovered once touched
     if (this.isHover && !this.hasBeenHovered) {
       this.hasBeenHovered = true;
-      this.targetX = (this.targetX - window.innerWidth / 2) * 100;
-      this.targetY = (this.targetY - window.innerHeight / 2) * 100;
+      this.targetX = (this.targetX - window.innerWidth / 2) * 150;
+      this.targetY = (this.targetY - window.innerHeight / 2) * 150;
 
       this.targetX = math.clamp(
         this.targetX,
@@ -196,5 +223,46 @@ export default class FlyingObject {
       this.targetForceMultiplier = 0.01;
       this.randomForce = 10;
     }
+  }
+
+  getSpeed() {
+    return math.dist(0, 0, this.velocityX, this.velocityY);
+  }
+
+  isMoving() {
+    return this.getSpeed() > 0.5;
+  }
+
+  isInsideCanvas() {
+    return (
+      this.x >= -this.size &&
+      this.x <= this.ctx.canvas.width + this.size &&
+      this.y >= -this.size &&
+      this.y <= this.ctx.canvas.height + this.size
+    );
+  }
+
+  updateAudio() {
+    const speed = this.getSpeed();
+    // Only play audio if fly is inside canvas and moving
+    if (speed > 0.5 && this.isInsideCanvas()) {
+      // Map speed (0-10) to volume (0-0.25), clamped to prevent loud audio
+      const volume = math.clamp((speed / 10) * 0.25, 0, 0.25);
+      this.audio.volume = volume;
+
+      if (this.audio.paused) {
+        this.audio.play().catch(() => {});
+      }
+    } else {
+      this.audio.volume = 0;
+      if (!this.audio.paused) {
+        this.audio.pause();
+      }
+    }
+  }
+
+  stopAudio() {
+    this.audio.pause();
+    this.audio.currentTime = 0;
   }
 }

@@ -199,4 +199,9 @@ export default class Tomato {
   drawTraces() {
     // Traces are now stored globally, so this method is not needed anymore
   }
+  CleanUpTraces() {
+    //create rectangle on the position of the mouse, to simulate a cleaning sheet
+    this.ctx.fillStyle = "yellow";
+    this.ctx.fillRect(this.input.getX() - 50, this.input.getY() - 50, 100, 100);
+  }
 }

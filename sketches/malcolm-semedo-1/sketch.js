@@ -39,9 +39,12 @@ onSvgLoad(() => {
 function update(dt) {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
   flyingObjects.forEach((obj) => {
     obj.update(dt);
     obj.draw();
+    obj.updateAudio();
+
     if (obj.hasBeenHovered) {
       if (
         obj.x < 0 - obj.size ||
@@ -49,6 +52,7 @@ function update(dt) {
         obj.y < 0 - obj.size ||
         obj.y > canvas.height + obj.size
       ) {
+        obj.stopAudio();
         flyingObjects.splice(flyingObjects.indexOf(obj), 1);
       }
     }
