@@ -42,7 +42,7 @@ for (let i = 0; i < NUM_SPRITES; i++) {
 
 let tomato = [];
 let stuckTomatoCount = 0;
-const limiteStuckTomatoes = 50;
+const limiteStuckTomatoes = 20;
 let allTraces = []; // Global array to store all traces separately
 
 function update(dt) {
