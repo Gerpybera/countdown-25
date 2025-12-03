@@ -45,7 +45,7 @@ function update(dt) {
     obj.draw();
     obj.updateAudio();
 
-    if (obj.hasBeenHovered) {
+    if (obj.hasEverBeenHovered) {
       if (
         obj.x < 0 - obj.size ||
         obj.x > canvas.width + obj.size ||

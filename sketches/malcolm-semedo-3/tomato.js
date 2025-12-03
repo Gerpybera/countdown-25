@@ -183,6 +183,10 @@ export default class Tomato {
   }
   tomatoTrace() {
     if (!this.isMoving) return;
+
+    // Don't create traces if tomato is below the canvas
+    if (this.posY > this.ctx.canvas.height) return;
+
     console.log("Creating tomato trace at:", this.posX, this.posY);
 
     // Create a trace object with position, size, and opacity
@@ -190,7 +194,7 @@ export default class Tomato {
       x: this.posX,
       y: this.posY,
       size: this.size,
-      alpha: 0.01,
+      alpha: 0.1,
     };
 
     // Push the trace to the global traces array

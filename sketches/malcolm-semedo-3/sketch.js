@@ -45,6 +45,7 @@ let stuckTomatoCount = 0;
 const limiteStuckTomatoes = 30;
 let allTraces = []; // Global array to store all traces separately
 let isTomatoThrowable = true;
+let isCleanupMode = false;
 
 console.log(canvas.width, canvas.height);
 function update(dt) {
@@ -56,12 +57,19 @@ function update(dt) {
     spring.target = 1;
   }
   */
-  if (input.isDown()) {
-    spring.target = 0;
-    if (!isTomatoThrowable) return;
-    tomato.push(new Tomato(ctx, input, allTraces, preloadedImages));
+  // Only allow throwing tomatoes if not in cleanup mode
+  if (!isCleanupMode) {
+    if (input.isDown()) {
+      spring.target = 0;
+      if (isTomatoThrowable) {
+        tomato.push(new Tomato(ctx, input, allTraces, preloadedImages));
+      }
+    } else {
+      spring.target = 1;
+    }
   } else {
-    spring.target = 1;
+    // In cleanup mode, remove traces near cursor
+    cleanUpTraces();
   }
 
   spring.step(dt);
@@ -95,11 +103,17 @@ function update(dt) {
     }
     if (stuckTomatoCount >= limiteStuckTomatoes) {
       t.posY += 5;
+      // Switch to cleanup mode when all tomatoes are gone
       if (tomato.length === 0) {
-        finish();
+        isCleanupMode = true;
       }
     }
   });
+
+  // Finish when all traces are cleaned up
+  if (isCleanupMode && allTraces.length === 0) {
+    finish();
+  }
 }
 
 function getDifferentSplashImage() {
@@ -116,12 +130,19 @@ function getDifferentSplashImage() {
 }
 
 function cleanUpTraces() {
-  const rectSize = 100;
-  ctx.fillStyle = "yellow";
-  ctx.fillRect(
-    input.getX() - rectSize / 2,
-    input.getY() - rectSize / 2,
-    rectSize,
-    rectSize
-  );
+  const cleanupRadius = 100;
+  const mouseX = input.getX();
+  const mouseY = input.getY();
+
+  // Remove traces that are close to the cursor
+  for (let i = allTraces.length - 1; i >= 0; i--) {
+    const trace = allTraces[i];
+    const dx = trace.x - mouseX;
+    const dy = trace.y - mouseY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < cleanupRadius) {
+      allTraces.splice(i, 1);
+    }
+  }
 }

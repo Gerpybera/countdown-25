@@ -37,6 +37,7 @@ export default class FlyingObject {
     this.randomincrementX = Math.random() * this.incrLVL - this.incrLVL / 2;
     this.randomincrementY = Math.random() * this.incrLVL - this.incrLVL / 2;
     this.hasBeenHovered = false;
+    this.hasEverBeenHovered = false; // Track if fly was ever interacted with (for removal)
     this.supposedToGoBack = true;
     this.randomForce = 10;
     this.randomOffset = Math.random() * 1000;
@@ -217,6 +218,7 @@ export default class FlyingObject {
     // Mark as hovered once touched and set new target
     if (this.isHover && !this.hasBeenHovered) {
       this.hasBeenHovered = true;
+      this.hasEverBeenHovered = true; // Once hovered, always eligible for removal
 
       // Pick a random direction to fly away
       const angle = Math.random() * Math.PI * 2;
