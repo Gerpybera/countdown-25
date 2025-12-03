@@ -67,9 +67,6 @@ function update(dt) {
     }
     leavesInitialized = true;
   }
-  if (shouldStartFalling) {
-    drawSvgOutline();
-  }
   // Update and draw all leaves
   for (let i = 0; i < leaves.length; i++) {
     leaves[i].update();
@@ -90,18 +87,12 @@ function update(dt) {
         leaf.falloffOffset();
         if (leaf.posY > canvas.height + leaf.size) {
           leaves.splice(leaves.indexOf(leaf), 1);
+          if (leaves.length === 0) {
+            finish();
+          }
         }
       });
     }, 1000);
-    if (leaves.length === 0) {
-      setTimeout(() => {
-        svgPosY += svgVelocity;
-        svgVelocity += 0.5;
-        if (svgPosY > canvas.height + 500 * 2.5) {
-          finish();
-        }
-      }, 1000);
-    }
   }
 
   /*
