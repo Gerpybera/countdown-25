@@ -19,6 +19,27 @@ svgImage.onload = () => {
   svgloaeded = true;
 };
 
+// Preload tomato and splash images (arrays for randomization)
+const NUM_SPRITES = 4; // Number of sprite variations (adjust based on your assets)
+const preloadedImages = {
+  tomatoes: [],
+  splashes: [],
+};
+
+// Preload all sprite variations
+for (let i = 0; i < NUM_SPRITES; i++) {
+  const tomatoImg = new Image();
+  const splashImg = new Image();
+  // Assuming files are named: tomato.png, tomato2.png, tomato3.png, etc.
+  // Or: tomato-0.png, tomato-1.png, etc. - adjust the path as needed
+  tomatoImg.src =
+    i === 0 ? "./assets/PNG/tomato.png" : `./assets/PNG/tomato${i + 1}.png`;
+  splashImg.src =
+    i === 0 ? "./assets/PNG/splash.png" : `./assets/PNG/splash${i + 1}.png`;
+  preloadedImages.tomatoes.push(tomatoImg);
+  preloadedImages.splashes.push(splashImg);
+}
+
 let tomato = [];
 let stuckTomatoCount = 0;
 const limiteStuckTomatoes = 50;
@@ -35,7 +56,7 @@ function update(dt) {
   */
   if (input.isDown()) {
     spring.target = 0;
-    tomato.push(new Tomato(ctx, input, allTraces));
+    tomato.push(new Tomato(ctx, input, allTraces, preloadedImages));
   } else {
     spring.target = 1;
   }
@@ -76,4 +97,17 @@ function update(dt) {
       }
     }
   });
+}
+
+function getDifferentSplashImage() {
+  switch (number) {
+    case 1:
+      return "./assets/PNG/splash.png";
+    case 2:
+      return "./assets/PNG/splash-2.png";
+    case 3:
+      return "./assets/PNG/splash-3.png";
+    case 4:
+      return "./assets/PNG/splash-4.png";
+  }
 }

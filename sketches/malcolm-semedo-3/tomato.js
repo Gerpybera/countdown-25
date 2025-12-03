@@ -1,7 +1,7 @@
 import { d } from "./svg.js";
 
 export default class Tomato {
-  constructor(ctx, input, globalTraces) {
+  constructor(ctx, input, globalTraces, preloadedImages) {
     this.ctx = ctx;
     this.input = input;
     this.globalTraces = globalTraces; // Reference to global traces array
@@ -10,10 +10,18 @@ export default class Tomato {
     this.isInsideArea = false;
     this.posX = this.input.getX();
     this.posY = this.input.getY();
+    this.rotation = 0;
+    this.rotationSpeed = Math.random(-1, 1) * 0.1;
     this.randomSizeOffset = Math.random() * 50 - 20;
     this.imgSize = 200 + this.randomSizeOffset;
-    this.tomatoSprite = "./assets/PNG/tomato.png";
-    this.splashSprite = "./assets/PNG/splash.png";
+
+    // Pick a random sprite from preloaded arrays
+    this.randomSprite = Math.floor(
+      Math.random() * preloadedImages.tomatoes.length
+    );
+    this.tomatoImg = preloadedImages.tomatoes[this.randomSprite];
+    this.splashImg = preloadedImages.splashes[this.randomSprite];
+
     this.splashSize = this.imgSize - 50 + this.randomSizeOffset;
     this.traces = [];
     this.isCounted = false;
@@ -78,28 +86,33 @@ export default class Tomato {
 
   createTomato(x, y) {
     if (this.isSticking) {
-      //this.ctx.fillStyle = "green";
-      let tomatoImg = new Image();
-      tomatoImg.src = this.splashSprite;
+      this.ctx.save();
+      this.ctx.translate(x, y);
+      this.ctx.rotate(this.rotation);
+      this.ctx.translate(-x, -y);
       this.ctx.drawImage(
-        tomatoImg,
+        this.splashImg,
         x - this.imgSize / 2,
         y - this.imgSize / 2,
         this.imgSize,
         this.imgSize
       );
+      this.ctx.restore();
       return;
     } else {
-      //this.ctx.fillStyle = this.color;
-      let tomatoImg = new Image();
-      tomatoImg.src = this.tomatoSprite;
+      this.ctx.save();
+      this.ctx.translate(x, y);
+      this.rotation += this.rotationSpeed;
+      this.ctx.rotate(this.rotation);
+      this.ctx.translate(-x, -y);
       this.ctx.drawImage(
-        tomatoImg,
+        this.tomatoImg,
         x - this.imgSize / 2,
         y - this.imgSize / 2,
         this.imgSize,
         this.imgSize
       );
+      this.ctx.restore();
       return;
     }
     //this.ctx.fillStyle = this.color;
