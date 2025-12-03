@@ -14,7 +14,7 @@ const spring = new Spring({
 });
 
 let flyingObjects = [];
-const NUM_OBJECTS = 300;
+const NUM_OBJECTS = 50;
 
 // Create flying objects AFTER SVG is loaded
 onSvgLoad(() => {

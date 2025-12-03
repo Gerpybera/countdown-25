@@ -15,7 +15,7 @@ export default class FlyingObject {
     this.targetY = this.basePos.y;
     this.mouseX = this.input.getX();
     this.mouseY = this.input.getY();
-    this.size = 30;
+    this.size = 60;
     this.speedX = (Math.random() - 0.5) * 2;
     this.speedY = (Math.random() - 0.5) * 2;
     this.isHover = this.hoverCheck();
@@ -26,6 +26,14 @@ export default class FlyingObject {
     this.randomincrementY = Math.random() * this.incrLVL - this.incrLVL / 2;
     this.hasBeenHovered = false;
     this.supposedToGoBack = true;
+
+    this.videoPath = "./assets/VIDEO/placeholder.webm";
+    this.sprite = document.createElement("video");
+    this.sprite.src = this.videoPath;
+    this.sprite.loop = true;
+    this.sprite.muted = true;
+    this.sprite.playsInline = true;
+    this.sprite.play();
   }
 
   getRandomPointInsideSVG() {
@@ -63,6 +71,11 @@ export default class FlyingObject {
   }
   setup() {
     console.log("FlyingObject created at:", this.x, this.y);
+    this.sprite = document.createElement("video");
+    this.sprite.src = this.videoPath;
+    this.sprite.loop = true;
+    this.sprite.muted = true;
+    this.sprite.play();
     this.draw();
   }
   update() {
@@ -80,16 +93,14 @@ export default class FlyingObject {
   }
   draw() {
     const shakingAmount = 0;
-    this.ctx.fillStyle = this.isHover ? "red" : "white";
-    this.ctx.beginPath();
-    this.ctx.arc(
-      this.x + Math.random() * shakingAmount - shakingAmount / 2,
-      this.y + Math.random() * shakingAmount - shakingAmount / 2,
-      this.size,
-      0,
-      Math.PI * 2
+
+    this.ctx.drawImage(
+      this.sprite,
+      this.x - this.size,
+      this.y - this.size,
+      this.size * 2,
+      this.size * 2
     );
-    this.ctx.fill();
   }
   goToBasePosition() {
     if (!this.supposedToGoBack) return;
