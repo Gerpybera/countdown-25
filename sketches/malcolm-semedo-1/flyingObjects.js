@@ -1,7 +1,7 @@
 import { d } from "./svg.js";
 
 export default class FlyingObject {
-  constructor(ctx, input) {
+  constructor(ctx, input, preloadedVideo) {
     this.ctx = ctx;
     this.input = input;
     this.svg = new Path2D(d);
@@ -9,31 +9,27 @@ export default class FlyingObject {
     // Get target position inside SVG
     this.basePos = this.getRandomPointInsideSVG();
     this.x = this.basePos.x;
-    this.y = -Math.random() * window.innerHeight; // Start above the canvas
+    this.y = -Math.random() * window.innerHeight - 100; // Start above the canvas
 
     this.targetX = this.basePos.x;
     this.targetY = this.basePos.y;
     this.mouseX = this.input.getX();
     this.mouseY = this.input.getY();
-    this.size = 60;
+    this.size = 50;
     this.speedX = (Math.random() - 0.5) * 2;
     this.speedY = (Math.random() - 0.5) * 2;
     this.isHover = this.hoverCheck();
     this.velocityX = 0;
     this.velocityY = 0;
-    this.incrLVL = 0.2;
+    this.incrLVL = 0.3;
     this.randomincrementX = Math.random() * this.incrLVL - this.incrLVL / 2;
     this.randomincrementY = Math.random() * this.incrLVL - this.incrLVL / 2;
     this.hasBeenHovered = false;
     this.supposedToGoBack = true;
+    this.rotation = 0; // Rotation angle in radians
 
-    this.videoPath = "./assets/VIDEO/placeholder.webm";
-    this.sprite = document.createElement("video");
-    this.sprite.src = this.videoPath;
-    this.sprite.loop = true;
-    this.sprite.muted = true;
-    this.sprite.playsInline = true;
-    this.sprite.play();
+    // Use the preloaded video
+    this.sprite = preloadedVideo;
   }
 
   getRandomPointInsideSVG() {
@@ -92,15 +88,26 @@ export default class FlyingObject {
     return distance < this.size;
   }
   draw() {
-    const shakingAmount = 0;
+    this.ctx.save();
+
+    // Calculate rotation from velocity when flying away
+    if (this.hasBeenHovered && (this.velocityX !== 0 || this.velocityY !== 0)) {
+      this.rotation = Math.atan2(this.velocityY, this.velocityX) - Math.PI / 2; // +90° so "down" becomes forward
+    }
+
+    // Translate to object center, rotate, then draw
+    this.ctx.translate(this.x, this.y);
+    this.ctx.rotate(this.rotation);
 
     this.ctx.drawImage(
       this.sprite,
-      this.x - this.size,
-      this.y - this.size,
+      -this.size,
+      -this.size,
       this.size * 2,
       this.size * 2
     );
+
+    this.ctx.restore();
   }
   goToBasePosition() {
     if (!this.supposedToGoBack) return;

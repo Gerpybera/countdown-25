@@ -5,7 +5,20 @@ import { onSvgLoad } from "./svg.js";
 
 const { renderer, input, math, run, finish } = createEngine();
 const { ctx, canvas } = renderer;
-run(update);
+
+// Preload the video once
+const preloadedVideo = document.createElement("video");
+preloadedVideo.src = "./assets/VIDEO/flies.webm";
+preloadedVideo.loop = true;
+preloadedVideo.muted = true;
+preloadedVideo.playsInline = true;
+preloadedVideo.preload = "auto";
+
+// Wait for video to be ready before starting
+preloadedVideo.addEventListener("canplaythrough", () => {
+  preloadedVideo.play();
+  run(update);
+});
 
 const spring = new Spring({
   position: -canvas.width,
@@ -14,12 +27,12 @@ const spring = new Spring({
 });
 
 let flyingObjects = [];
-const NUM_OBJECTS = 50;
+const NUM_OBJECTS = 200;
 
 // Create flying objects AFTER SVG is loaded
 onSvgLoad(() => {
   for (let i = 0; i < NUM_OBJECTS; i++) {
-    flyingObjects.push(new FlyingObjects(ctx, input));
+    flyingObjects.push(new FlyingObjects(ctx, input, preloadedVideo));
   }
 });
 
