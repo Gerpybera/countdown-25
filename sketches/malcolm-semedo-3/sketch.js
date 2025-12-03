@@ -110,6 +110,10 @@ function update(dt) {
     }
   });
 
+  if (isCleanupMode) {
+    visualCleanUpObject();
+  }
+
   // Finish when all traces are cleaned up
   if (isCleanupMode && allTraces.length === 0) {
     finish();
@@ -129,8 +133,8 @@ function getDifferentSplashImage() {
   }
 }
 
+const cleanupRadius = ctx.canvas.width * 0.1;
 function cleanUpTraces() {
-  const cleanupRadius = 100;
   const mouseX = input.getX();
   const mouseY = input.getY();
 
@@ -145,4 +149,17 @@ function cleanUpTraces() {
       allTraces.splice(i, 1);
     }
   }
+}
+
+function visualCleanUpObject() {
+  const mouseX = input.getX();
+  const mouseY = input.getY();
+
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(
+    mouseX - cleanupRadius / 2,
+    mouseY - cleanupRadius / 2,
+    cleanupRadius,
+    cleanupRadius
+  );
 }

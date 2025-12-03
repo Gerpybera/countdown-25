@@ -1,9 +1,52 @@
 import { createEngine } from "../_shared/engine.js";
 import { createSpringSettings, Spring } from "../_shared/spring.js";
+import FallingObject, {
+  updateSharedPhysics,
+  initSvgCollision,
+} from "./fallingObjects.js";
+import { onSvgLoad } from "./svg.js";
 
 const { renderer, input, math, run, finish } = createEngine();
 const { ctx, canvas } = renderer;
-run(update);
+
+// SVG collision settings
+const imgGlobalSize = canvas.width / 2;
+const svgScale = 1;
+
+// Initialize SVG collision after SVGs are loaded
+onSvgLoad(() => {
+  initSvgCollision(ctx, imgGlobalSize, svgScale);
+  console.log("SVG collision initialized");
+});
+
+const test = new FallingObject(ctx, canvas.width / 2, 0, 50);
+
+const objects = [];
+const MAX_OBJECTS = 5000;
+
+// Spawn objects on interval when activated
+let spawnInterval = null;
+const SPAWN_DELAY = 10; // milliseconds between spawns
+
+function startSpawning() {
+  if (spawnInterval) return; // Already spawning
+  spawnInterval = setInterval(() => {
+    if (objects.length < MAX_OBJECTS) {
+      const x = 900 + Math.random() * 200; // Spawn within a range
+      const y = Math.random(20, -20); // Spawn above the canvas
+      const size = 30;
+      objects.push(new FallingObject(ctx, x, y, size));
+      console.log("Number of objects:", objects.length);
+    }
+  }, SPAWN_DELAY);
+}
+
+function stopSpawning() {
+  if (spawnInterval) {
+    clearInterval(spawnInterval);
+    spawnInterval = null;
+  }
+}
 
 const spring = new Spring({
   position: 0,
@@ -17,6 +60,8 @@ const settings2 = createSpringSettings({
   frequency: 0.2,
   halfLife: 1.15,
 });
+
+run(update);
 
 function update(dt) {
   if (input.isPressed()) {
@@ -37,12 +82,21 @@ function update(dt) {
 
   if (activated) {
     bgColor = "white";
+    startSpawning();
   } else {
     bgColor = "black";
+    stopSpawning();
   }
 
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Update physics for all objects
+  updateSharedPhysics();
+
+  objects.forEach((obj) => {
+    obj.update();
+  });
 
   createLever();
 }
@@ -58,14 +112,15 @@ function createLever() {
 
   const leverLength = 600;
   const leverWidth = 300;
-  const posX = canvas.width / 4;
+  const posX = canvas.width * 0.1;
   let posY = canvas.height / 2 + leverLength / 2;
 
   let colorCheck = "darkgray";
 
+  /*
   const plateRectangle = new Image();
   plateRectangle.src = "./assets/PNG/plate-rectangle.png";
-
+*/
   //INTERACTION PART
 
   let isHovering = false;
