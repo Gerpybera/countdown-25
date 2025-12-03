@@ -9,7 +9,9 @@ export default class Leaves {
     this.posY = y || ctx.canvas.height / 2;
     this.velocityX = 0;
     this.velocityY = 0;
-    this.size = 50 + Math.random() * 20 - 10;
+    this.imgGlobalSize = this.ctx.canvas.width * 0.8;
+    this.scale = 1;
+    this.size = ctx.canvas.width * 0.03;
     this.mouseX = this.input.getX();
     this.mouseY = this.input.getY();
     this.forceInfluence = 0;
@@ -174,18 +176,17 @@ export default class Leaves {
     const canvasWidth = this.ctx.canvas.width;
     const canvasHeight = this.ctx.canvas.height;
 
-    const scale = 2.5; // Use the same scale as your rendered SVG
-    const imgSizeX = 500 * scale; // Original SVG width
-    const imgSizeY = 500 * scale; // Original SVG height
+    const svgOriginalSize = 500; // Original SVG path size
+    const scale = (this.imgGlobalSize * this.scale) / svgOriginalSize;
 
-    // Translate to center, then subtract half the SVG size
+    // Translate to center, then subtract half the final SVG size
     this.ctx.translate(
-      canvasWidth / 2 - imgSizeX / 2,
-      canvasHeight / 2 - imgSizeY / 2
+      canvasWidth / 2 - (this.imgGlobalSize * this.scale) / 2,
+      canvasHeight / 2 - (this.imgGlobalSize * this.scale) / 2
     );
     this.ctx.scale(scale, scale);
 
-    // Check if the tomato point is inside the transformed path
+    // Check if the point is inside the transformed path
     const isInside = this.ctx.isPointInPath(svgPath, posX, posY);
 
     this.ctx.restore();
@@ -213,11 +214,15 @@ export default class Leaves {
     this.ctx.save();
     this.ctx.strokeStyle = "red";
     this.ctx.lineWidth = 2;
+
+    const svgOriginalSize = 500; // Original SVG path size
+    const scale = (this.imgGlobalSize * this.scale) / svgOriginalSize;
+
     this.ctx.translate(
-      this.ctx.canvas.width / 2 - (500 * 2.5) / 2,
-      this.ctx.canvas.height / 2 - (500 * 2.5) / 2
+      this.ctx.canvas.width / 2 - (this.imgGlobalSize * this.scale) / 2,
+      this.ctx.canvas.height / 2 - (this.imgGlobalSize * this.scale) / 2
     );
-    this.ctx.scale(2.5, 2.5);
+    this.ctx.scale(scale, scale);
     this.ctx.stroke(new Path2D(d));
     this.ctx.restore();
   }

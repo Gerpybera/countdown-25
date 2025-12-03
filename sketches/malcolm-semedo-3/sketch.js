@@ -44,7 +44,9 @@ let tomato = [];
 let stuckTomatoCount = 0;
 const limiteStuckTomatoes = 20;
 let allTraces = []; // Global array to store all traces separately
+let isTomatoThrowable = true;
 
+console.log(canvas.width, canvas.height);
 function update(dt) {
   /*
   if (input.isPressed()) {
@@ -56,6 +58,7 @@ function update(dt) {
   */
   if (input.isDown()) {
     spring.target = 0;
+    if (!isTomatoThrowable) return;
     tomato.push(new Tomato(ctx, input, allTraces, preloadedImages));
   } else {
     spring.target = 1;
@@ -93,7 +96,7 @@ function update(dt) {
     if (stuckTomatoCount >= limiteStuckTomatoes) {
       t.posY += 5;
       if (tomato.length === 0) {
-        finish();
+        cleanUpTraces();
       }
     }
   });
@@ -110,4 +113,15 @@ function getDifferentSplashImage() {
     case 4:
       return "./assets/PNG/splash-4.png";
   }
+}
+
+function cleanUpTraces() {
+  const rectSize = 100;
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(
+    input.getX() - rectSize / 2,
+    input.getY() - rectSize / 2,
+    rectSize,
+    rectSize
+  );
 }
