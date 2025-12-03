@@ -2,7 +2,7 @@ import { d } from "./svg.js";
 import * as math from "../_shared/engine/math.js";
 
 export default class Leaves {
-  constructor(ctx, input, x, y) {
+  constructor(ctx, input, x, y, preloadedLeafSound) {
     this.ctx = ctx;
     this.input = input;
     this.posX = x || ctx.canvas.width / 2;
@@ -28,6 +28,23 @@ export default class Leaves {
     this.fallOffDelay = Math.random() * 1; // Random delay between 0-1 seconds
     this.timeSinceFallOff = 0;
     this.isFallingOff = false;
+
+    // Use preloaded sound
+    this.leafSound = preloadedLeafSound;
+  }
+
+  isMoving() {
+    return this.getSpeed() > 0.5 || this.isFallingOff;
+  }
+
+  getSpeed() {
+    // When falling off, use the fall speed for sound volume
+    if (this.isFallingOff) {
+      return 5 + Math.random() * 2; // Approximate fall speed
+    }
+    return Math.sqrt(
+      this.velocityX * this.velocityX + this.velocityY * this.velocityY
+    );
   }
 
   getfilePath() {
@@ -59,7 +76,9 @@ export default class Leaves {
     );
     this.detectRange();
     if (this.affectedByMouse && !this.isInsideArea) {
-      this.blowAway();
+      if (this.input.isPressed()) {
+        this.blowAway();
+      }
     }
 
     const damping = 0.2; // Damping factor

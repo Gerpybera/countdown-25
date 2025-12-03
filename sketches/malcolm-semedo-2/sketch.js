@@ -42,6 +42,10 @@ for (let i = 0; i < numberLeaves; i++) {
   });
 }
 
+// Preload leaf sound (shared by all leaves)
+const preloadedLeafSound = new Audio("./assets/AUDIO/leaf-rustle.wav");
+preloadedLeafSound.volume = 1;
+
 const State = {
   WaitingForInput: "waitingForInput",
   Interactive: "interactive",
@@ -59,18 +63,44 @@ function update(dt) {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  playLeafBlowSound();
+
   // Create leaves only once
   if (!leavesInitialized) {
     for (let i = 0; i < randomNumbers.length; i++) {
       const { posX, posY } = randomNumbers[i];
-      leaves.push(new Leaves(ctx, input, posX, posY));
+      leaves.push(new Leaves(ctx, input, posX, posY, preloadedLeafSound));
     }
     leavesInitialized = true;
   }
   // Update and draw all leaves
+  let anyLeafMoving = false;
+  let totalSpeed = 0;
+  let movingCount = 0;
   for (let i = 0; i < leaves.length; i++) {
     leaves[i].update();
     leaves[i].draw();
+    if (leaves[i].isMoving()) {
+      anyLeafMoving = true;
+      totalSpeed += leaves[i].getSpeed();
+      movingCount++;
+    }
+  }
+
+  // Control leaf rustle sound globally with volume based on speed
+  if (anyLeafMoving) {
+    const avgSpeed = totalSpeed / movingCount;
+    // Map average speed (0-20) to volume (0.05-0.5)
+    const volume = Math.min(0.05 + (avgSpeed / 20) * 0.45, 0.5);
+    preloadedLeafSound.volume = volume;
+
+    if (preloadedLeafSound.paused) {
+      preloadedLeafSound.loop = true;
+      preloadedLeafSound.play();
+    }
+  } else if (!preloadedLeafSound.paused) {
+    preloadedLeafSound.pause();
+    preloadedLeafSound.currentTime = 0;
   }
   //if all of my leaves have their isInsideArea to true, I can finish the sequence
   const allLeavesInside = leaves.every((leaf) => leaf.isInsideArea);
@@ -110,19 +140,38 @@ function update(dt) {
 */
 }
 
-let opacity = 0;
-let svgPosX = canvas.width / 2 - (500 * 2.5) / 2;
-let svgPosY = canvas.height / 2 - (500 * 2.5) / 2;
-let svgVelocity = 0;
-function drawSvgOutline() {
-  ctx.save();
-  if (opacity < 1) {
-    opacity += 0.01;
+// Preload audio outside the function
+const blowStart = new Audio("./assets/AUDIO/leafblower-start.wav");
+const blowLoop = new Audio("./assets/AUDIO/leafblower-loop.wav");
+const blowEnd = new Audio("./assets/AUDIO/leafblower-end.wav");
+const volumne = 0.7;
+blowStart.volume = volumne;
+blowLoop.volume = volumne;
+blowEnd.volume = volumne;
+
+function playLeafBlowSound() {
+  // Only play blowStart if it's not playing AND blowLoop is not playing
+  if (input.isPressed() && blowStart.paused && blowLoop.paused) {
+    blowEnd.pause();
+    blowEnd.currentTime = 0;
+    blowStart.currentTime = 0;
+    blowStart.play();
+    blowStart.addEventListener(
+      "ended",
+      () => {
+        blowStart.pause();
+        blowLoop.currentTime = 0;
+        blowLoop.loop = true;
+        blowLoop.play();
+      },
+      { once: true }
+    ); // Use once: true to prevent multiple listeners
   }
-  ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-  ctx.translate(svgPosX, svgPosY);
-  ctx.scale(2.5, 2.5);
-  const path = new Path2D(d);
-  ctx.fill(path);
-  ctx.restore();
+  if (input.isUp() && (!blowStart.paused || !blowLoop.paused)) {
+    blowLoop.pause();
+    blowStart.pause();
+    blowStart.currentTime = 0;
+    blowEnd.currentTime = 0;
+    blowEnd.play();
+  }
 }

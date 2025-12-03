@@ -37,18 +37,6 @@ onSvgLoad(() => {
 });
 
 function update(dt) {
-  /*
-  
-  if (input.isPressed()) {
-	spring.target = canvas.width
-	}
-	else {
-		spring.target = 0
-}
-
-spring.step(dt)
-*/
-
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   flyingObjects.forEach((obj) => {
