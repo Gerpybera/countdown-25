@@ -1,4 +1,5 @@
 import { d } from "./svg.js";
+import * as math from "../_shared/engine/math.js";
 
 export default class FlyingObject {
   constructor(ctx, input, preloadedVideo) {
@@ -8,8 +9,17 @@ export default class FlyingObject {
 
     // Get target position inside SVG
     this.basePos = this.getRandomPointInsideSVG();
-    this.x = this.basePos.x;
-    this.y = -Math.random() * window.innerHeight - 100; // Start above the canvas
+    this.x =
+      this.basePos.x +
+      Math.random() * window.innerWidth -
+      window.innerWidth / 2;
+    this.y = math.map(
+      this.basePos.y + Math.random() * 300,
+      window.innerHeight,
+      0,
+      -100,
+      -window.innerHeight * 4
+    ); //-Math.random() * window.innerHeight - 100; // Start above the canvas
 
     this.targetX = this.basePos.x;
     this.targetY = this.basePos.y;
@@ -26,7 +36,12 @@ export default class FlyingObject {
     this.randomincrementY = Math.random() * this.incrLVL - this.incrLVL / 2;
     this.hasBeenHovered = false;
     this.supposedToGoBack = true;
+    this.randomForce = 10;
+    this.randomOffset = Math.random() * 1000;
+    this.randomOffset2 = Math.random() * 1000;
     this.rotation = 0; // Rotation angle in radians
+    this.targetForceMultiplier = 1;
+    this.time = 0;
 
     // Use the preloaded video
     this.sprite = preloadedVideo;
@@ -72,14 +87,61 @@ export default class FlyingObject {
     this.sprite.loop = true;
     this.sprite.muted = true;
     this.sprite.play();
+    this.sprite.addEventListener("loadedmetadata", () => {
+      this.sprite.currentTime = Math.random() * this.sprite.duration;
+    });
     this.draw();
   }
-  update() {
+  update(dt) {
+    this.time += dt;
+
     this.mouseX = this.input.getX();
     this.mouseY = this.input.getY();
     this.isHover = this.hoverCheck();
-    this.goToBasePosition();
+
+    const targetForceX = (this.targetX - this.x) * this.targetForceMultiplier;
+    const targetForceY = (this.targetY - this.y) * this.targetForceMultiplier;
+
+    this.velocityX += targetForceX;
+    this.velocityY += targetForceY;
+
+    // max speed
+    const speed = math.dist(0, 0, this.velocityX, this.velocityY);
+    const maxSpeed = 10;
+    if (speed > maxSpeed) {
+      this.velocityX = (this.velocityX / speed) * maxSpeed;
+      this.velocityY = (this.velocityY / speed) * maxSpeed;
+    }
+
+    const distToTarget = math.dist(this.x, this.y, this.targetX, this.targetY);
+    const distToTargetInfluence = math.mapClamped(
+      distToTarget,
+      0,
+      window.innerWidth,
+      0,
+      1
+    );
+    const noiseScale = 3;
+    const randomForceX =
+      distToTargetInfluence *
+      this.randomForce *
+      Math.sin(this.time * noiseScale + this.randomOffset2);
+    const randomForceY =
+      distToTargetInfluence *
+      this.randomForce *
+      Math.sin(this.time * noiseScale + this.randomOffset);
+
+    this.velocityX += randomForceX;
+    this.velocityY += randomForceY;
+
+    const drag = 0.2;
+
+    //this.goToBasePosition();
     this.goDifferentDirection();
+    this.velocityX = this.velocityX * Math.exp(-drag);
+    this.velocityY = this.velocityY * Math.exp(-drag);
+    this.x += this.velocityX;
+    this.y += this.velocityY;
   }
   hoverCheck() {
     const dx = this.x - this.input.getX();
@@ -91,8 +153,12 @@ export default class FlyingObject {
     this.ctx.save();
 
     // Calculate rotation from velocity when flying away
-    if (this.hasBeenHovered && (this.velocityX !== 0 || this.velocityY !== 0)) {
-      this.rotation = Math.atan2(this.velocityY, this.velocityX) - Math.PI / 2; // +90° so "down" becomes forward
+    if (Math.abs(this.velocityX) > 3 || Math.abs(this.velocityY) > 3) {
+      this.rotation = math.lerpAngleDeg(
+        this.rotation,
+        Math.atan2(this.velocityY, this.velocityX) - Math.PI / 2,
+        0.5
+      ); // +90° so "down" becomes forward
     }
 
     // Translate to object center, rotate, then draw
@@ -109,27 +175,26 @@ export default class FlyingObject {
 
     this.ctx.restore();
   }
-  goToBasePosition() {
-    if (!this.supposedToGoBack) return;
-    if (this.y < this.basePos.y) {
-      this.y += 5;
-    } else {
-      this.y = this.basePos.y;
-      this.supposedToGoBack = false;
-    }
-  }
+
   goDifferentDirection() {
     // Mark as hovered once touched
-    if (this.isHover) {
+    if (this.isHover && !this.hasBeenHovered) {
       this.hasBeenHovered = true;
-    }
+      this.targetX = (this.targetX - window.innerWidth / 2) * 100;
+      this.targetY = (this.targetY - window.innerHeight / 2) * 100;
 
-    // Once hovered, keep moving and accelerating
-    if (this.hasBeenHovered) {
-      this.x += this.velocityX;
-      this.y += this.velocityY;
-      this.velocityX += this.randomincrementX;
-      this.velocityY += this.randomincrementY;
+      this.targetX = math.clamp(
+        this.targetX,
+        -window.innerWidth * 2,
+        window.innerWidth * 2
+      );
+      this.targetY = math.clamp(
+        this.targetY,
+        -window.innerHeight * 2,
+        window.innerHeight * 2
+      );
+      this.targetForceMultiplier = 0.01;
+      this.randomForce = 10;
     }
   }
 }

@@ -54,14 +54,19 @@ let circleSize = 50;
 let activated = false;
 
 function createLever() {
-  const posX = canvas.width / 4;
-  const posY = canvas.height / 2 + 200;
   const padding = 20;
 
-  const leverLength = 500;
+  const leverLength = 600;
   const leverWidth = 300;
+  const posX = canvas.width / 4;
+  let posY = canvas.height / 2 + leverLength / 2;
 
   let colorCheck = "darkgray";
+
+  const plateRectangle = new Image();
+  plateRectangle.src = "./assets/PNG/plate-rectangle.png";
+
+  //INTERACTION PART
 
   let isHovering = false;
   if (
@@ -81,7 +86,7 @@ function createLever() {
   if (input.getY() >= minConstraintY && input.getY() <= maxConstraintY) {
     isInsideConstraint = true;
   }
-  const detectionZoneMinY = posY - leverLength / 4;
+  const detectionZoneMinY = posY - leverLength / 3;
   if (leverPosY + posY > detectionZoneMinY) {
     console.log("activating lever");
     activated = true;
@@ -102,6 +107,8 @@ function createLever() {
       leverPosY -= 2;
     }
   }
+
+  //DRAWING PART
   ctx.fillStyle = "gray";
   ctx.save();
   ctx.translate(posX, posY);

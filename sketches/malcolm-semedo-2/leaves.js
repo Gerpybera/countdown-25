@@ -1,4 +1,5 @@
 import { d } from "./svg.js";
+import * as math from "../_shared/engine/math.js";
 
 export default class Leaves {
   constructor(ctx, input, x, y) {
@@ -6,10 +7,12 @@ export default class Leaves {
     this.input = input;
     this.posX = x || ctx.canvas.width / 2;
     this.posY = y || ctx.canvas.height / 2;
+    this.velocityX = 0;
+    this.velocityY = 0;
     this.size = 50 + Math.random() * 20 - 10;
     this.mouseX = this.input.getX();
     this.mouseY = this.input.getY();
-    this.isInRange = false;
+    this.forceInfluence = 0;
     this.affectedByMouse = true;
     this.rangeDetection = 400;
     this.blowAwaySpeed = 15;
@@ -55,9 +58,16 @@ export default class Leaves {
       new Path2D(d)
     );
     this.detectRange();
-    if (this.affectedByMouse) {
+    if (this.affectedByMouse && !this.isInsideArea) {
       this.blowAway();
     }
+
+    const damping = 0.2; // Damping factor
+    this.velocityX *= Math.exp(-damping); // Friction effect
+    this.velocityY *= Math.exp(-damping);
+
+    this.posX += this.velocityX;
+    this.posY += this.velocityY;
   }
 
   draw() {
@@ -86,24 +96,35 @@ export default class Leaves {
     const distX = this.mouseX - this.posX;
     const distY = this.mouseY - this.posY;
     const distance = Math.sqrt(distX * distX + distY * distY);
-    this.isInRange = distance < this.rangeDetection;
+    this.forceInfluence = math.mapClamped(
+      distance,
+      0,
+      this.rangeDetection,
+      1,
+      0
+    );
   }
 
   blowAway() {
-    if (this.isInRange && !this.isInsideArea) {
-      // Calculate direction away from mouse
-      const distX = this.posX - this.mouseX;
-      const distY = this.posY - this.mouseY;
-      const distance = Math.sqrt(distX * distX + distY * distY);
+    // Calculate direction away from mouse
+    const distX = this.posX - this.mouseX;
+    const distY = this.posY - this.mouseY;
+    const distance = Math.sqrt(distX * distX + distY * distY);
 
-      // Normalize direction and apply speed
-      if (distance > 0) {
-        const dirX = distX / distance;
-        const dirY = distY / distance;
+    // Normalize direction and apply speed
+    if (distance > 0) {
+      const dirX = distX / distance;
+      const dirY = distY / distance;
 
-        this.posX += dirX * this.blowAwaySpeed + Math.random() * 5 - 2.5;
-        this.posY += dirY * this.blowAwaySpeed + Math.random() * 5 - 2.5;
-      }
+      const forceMulti = 0.5;
+      this.velocityX +=
+        this.forceInfluence *
+        forceMulti *
+        (dirX * this.blowAwaySpeed + Math.random() * 5 - 2.5);
+      this.velocityY +=
+        this.forceInfluence *
+        forceMulti *
+        (dirY * this.blowAwaySpeed + Math.random() * 5 - 2.5);
     }
   }
 

@@ -52,9 +52,9 @@ spring.step(dt)
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   flyingObjects.forEach((obj) => {
-    obj.update();
+    obj.update(dt);
     obj.draw();
-    if (!obj.supposedToGoBack) {
+    if (obj.hasBeenHovered) {
       if (
         obj.x < 0 - obj.size ||
         obj.x > canvas.width + obj.size ||
@@ -62,10 +62,11 @@ spring.step(dt)
         obj.y > canvas.height + obj.size
       ) {
         flyingObjects.splice(flyingObjects.indexOf(obj), 1);
-        if (flyingObjects.length === 0) {
-          finish();
-        }
       }
     }
   });
+
+  if (flyingObjects.length === 0) {
+    finish();
+  }
 }
