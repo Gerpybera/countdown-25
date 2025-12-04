@@ -183,6 +183,34 @@ export function updateSharedPhysics() {
   }
 }
 
+// Shared collision sound pool for optimization
+const collisionSoundPool = [];
+const POOL_SIZE = 5;
+let lastCollisionTime = 0;
+const COLLISION_COOLDOWN = 50; // ms between collision sounds
+
+// Initialize sound pool
+for (let i = 0; i < POOL_SIZE; i++) {
+  const sound = new Audio("./assets/AUDIO/placeholder.wav");
+  sound.volume = 0.3;
+  collisionSoundPool.push(sound);
+}
+
+let currentSoundIndex = 0;
+
+function playCollisionSound(intensity) {
+  const now = Date.now();
+  if (now - lastCollisionTime < COLLISION_COOLDOWN) return;
+
+  const sound = collisionSoundPool[currentSoundIndex];
+  sound.volume = Math.min(intensity * 0.1, 0.5);
+  sound.currentTime = 0;
+  sound.play().catch(() => {}); // Ignore autoplay errors
+
+  currentSoundIndex = (currentSoundIndex + 1) % POOL_SIZE;
+  lastCollisionTime = now;
+}
+
 export default class FallingObject {
   constructor(ctx, x, y, size, isATrashBag = true) {
     this.ctx = ctx;
@@ -202,6 +230,7 @@ export default class FallingObject {
     this.randomSprite = this.getRandomSprite();
     this.isATrashBag = isATrashBag;
     this.rotation = Math.random() * Math.PI * 2; // Initial random rotation
+    this.lastVelocity = 0;
   }
   update() {
     // Calculate rotation based on velocity
@@ -209,9 +238,19 @@ export default class FallingObject {
     const lastY = this.body.lastPositionY ?? this.body.positionY;
     const velocityX = this.body.positionX - lastX;
     const velocityY = this.body.positionY - lastY;
+    const currentVelocity = Math.sqrt(
+      velocityX * velocityX + velocityY * velocityY
+    );
 
     // Add rotation based on horizontal velocity
     this.rotation += velocityX * 0.05;
+
+    // Detect collision by sudden velocity change (deceleration)
+    const velocityDrop = this.lastVelocity - currentVelocity;
+    if (velocityDrop > 2) {
+      playCollisionSound(velocityDrop);
+    }
+    this.lastVelocity = currentVelocity;
 
     // Physics is updated globally, just draw
     this.draw();

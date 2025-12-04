@@ -53,6 +53,12 @@ leverMovingSFX.loop = true;
 const leverStopSFX = new Audio("./assets/AUDIO/lever-click.wav");
 leverStopSFX.volume = 0.3;
 
+const machineRunning = new Audio("./assets/AUDIO/machine_running.wav");
+machineRunning.volume = 0.5;
+
+const openingSFX = new Audio("./assets/AUDIO/open.wav");
+openingSFX.volume = 0.5;
+
 function update(dt) {
   let bgColor = "black";
 
@@ -145,8 +151,8 @@ function createLever() {
     document.body.style.cursor = "default";
   }
   let isInsideConstraint = false;
-  const minConstraintY = posY - leverLength + circleSize + padding;
-  const maxConstraintY = posY - circleSize - padding;
+  const minConstraintY = posY - leverLength + circleSize / 2 + padding;
+  const maxConstraintY = posY - circleSize / 2 - padding;
   if (input.getY() >= minConstraintY && input.getY() <= maxConstraintY) {
     isInsideConstraint = true;
   }
@@ -267,6 +273,15 @@ function createLever() {
     leverStopSFX.play();
   }
   wasAtLimit = isAtLimit;
+
+  if (activated) {
+    if (machineRunning.paused) {
+      machineRunning.play();
+    }
+  } else {
+    machineRunning.pause();
+    machineRunning.currentTime = 0;
+  }
 }
 
 function rollNumberChoice() {
@@ -279,6 +294,7 @@ function rollNumberChoice() {
 }
 
 let containerRotation = 0;
+let lastContainerRotation = containerRotation;
 let containerPosX = canvas.width / 2;
 let containerPosY = canvas.height / 2;
 
@@ -324,4 +340,12 @@ function createContainer() {
   //ctx.fillRect(0, 0, containerWidth, containerHeight);
   ctx.restore();
   //containerRotation += 0.01;
+
+  //AUDIO for container opening when rotating
+  if (containerRotation !== lastContainerRotation) {
+    if (containerRotation > 0 && openingSFX.paused) {
+      openingSFX.play();
+    }
+    lastContainerRotation = containerRotation;
+  }
 }
