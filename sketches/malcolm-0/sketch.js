@@ -93,7 +93,7 @@ function update(dt) {
 let leverPosX = 0;
 let leverPosY = -250;
 let lastLeverPosY = leverPosY; // Track previous lever position
-let circleSize = 50;
+let circleSize = canvas.width * 0.01;
 
 let isPullable = false;
 let wasAtLimit = false; // Track if lever was at a limit position
@@ -115,7 +115,7 @@ let isSvgDeleteMode = false;
 function createLever() {
   const padding = 20;
 
-  const leverLength = 600;
+  const leverLength = canvas.width * 0.2;
   const leverWidth = leverLength / 2;
   const posX = canvas.width * 0.1;
   const STOREDPosY = canvas.height / 2 + leverLength / 2;
@@ -296,7 +296,8 @@ function rollNumberChoice() {
 let containerRotation = 0;
 let lastContainerRotation = containerRotation;
 let containerPosX = canvas.width / 2;
-let containerPosY = canvas.height / 2;
+let containerTargetY = canvas.height / 2; // Final position
+let containerPosY = -imgGlobalSize; // Start above canvas
 
 const containerImgLeft = new Image();
 containerImgLeft.src = "./assets/PNG/container-left.png";
@@ -309,6 +310,16 @@ function createContainer() {
   let containerHeight = imgGlobalSize;
   const marginWidth = 70;
   const marginHeight = 50;
+
+  // Animate container from top to target position (unless exiting)
+  const isExiting = isSvgDeleteMode && objects.length === 0;
+  if (!isExiting) {
+    if (containerPosY < containerTargetY) {
+      containerPosY += 5;
+    } else {
+      containerPosY = containerTargetY;
+    }
+  }
 
   let containerRotationInv = -containerRotation;
 
