@@ -99,18 +99,20 @@ let isPullable = false;
 let wasAtLimit = false; // Track if lever was at a limit position
 
 let activated = false;
+let isSvgDeleteMode = false;
 let posY = 0;
 
 const boxImg = new Image();
 boxImg.src = "./assets/PNG/box.png";
+
+const boxImg2 = new Image();
+boxImg2.src = "./assets/PNG/box2.png";
 
 const connectionImg = new Image();
 connectionImg.src = "./assets/PNG/connection.png";
 
 const leverImg = new Image();
 leverImg.src = "./assets/PNG/lever.png";
-
-let isSvgDeleteMode = false;
 
 function createLever() {
   const padding = 20;
@@ -220,7 +222,14 @@ function createLever() {
   ctx.translate(posX, posY);
   // create lever rectangle
   ctx.fillStyle = "gray";
-  ctx.drawImage(boxImg, -leverWidth / 2, -leverLength, leverWidth, leverLength);
+  const currentBoxImg = isSvgDeleteMode ? boxImg2 : boxImg;
+  ctx.drawImage(
+    currentBoxImg,
+    -leverWidth / 2,
+    -leverLength,
+    leverWidth,
+    leverLength
+  );
   //ctx.fillRect(-leverWidth / 2, -leverLength, leverWidth, leverLength);
 
   ctx.fillStyle = "darkgray";

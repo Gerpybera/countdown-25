@@ -2,7 +2,7 @@ import { d } from "./svg.js";
 import * as math from "../_shared/engine/math.js";
 
 export default class FlyingObject {
-  constructor(ctx, input, preloadedVideo) {
+  constructor(ctx, input, flyFrames) {
     this.ctx = ctx;
     this.input = input;
     this.svg = new Path2D(d);
@@ -46,8 +46,13 @@ export default class FlyingObject {
     this.targetForceMultiplier = 1;
     this.time = 0;
 
-    // Use the preloaded video
-    this.sprite = preloadedVideo;
+    // PNG sequence animation
+    this.flyFrames = flyFrames;
+    this.animationOffset = Math.random() * 100; // Random offset for each fly
+    this.frameCounter = this.animationOffset;
+    this.framesPerImage = 2; // Show each frame for 2 update cycles
+    this.pingPongDirection = 1; // 1 = forward, -1 = backward
+    this.currentFrameIndex = Math.floor(Math.random() * flyFrames.length); // Start at random frame
 
     // Sound variations - add more files here as needed
     this.soundVariations = [
@@ -109,18 +114,6 @@ export default class FlyingObject {
   isInsideSVG(x, y) {
     // Not needed anymore, keeping for potential future use
     return false;
-  }
-  setup() {
-    console.log("FlyingObject created at:", this.x, this.y);
-    this.sprite = document.createElement("video");
-    this.sprite.src = this.videoPath;
-    this.sprite.loop = true;
-    this.sprite.muted = true;
-    this.sprite.play();
-    this.sprite.addEventListener("loadedmetadata", () => {
-      this.sprite.currentTime = Math.random() * this.sprite.duration;
-    });
-    this.draw();
   }
   update(dt) {
     this.time += dt;
@@ -191,12 +184,31 @@ export default class FlyingObject {
       ); // +90° so "down" becomes forward
     }
 
+    // Only animate when moving
+    if (this.isMoving()) {
+      this.frameCounter++;
+      if (this.frameCounter >= this.framesPerImage) {
+        this.frameCounter = 0;
+        this.currentFrameIndex += this.pingPongDirection;
+
+        // Reverse direction at ends
+        if (this.currentFrameIndex >= this.flyFrames.length - 1) {
+          this.currentFrameIndex = this.flyFrames.length - 1;
+          this.pingPongDirection = -1;
+        } else if (this.currentFrameIndex <= 0) {
+          this.currentFrameIndex = 0;
+          this.pingPongDirection = 1;
+        }
+      }
+    }
+
     // Translate to object center, rotate, then draw
     this.ctx.translate(this.x, this.y);
     this.ctx.rotate(this.rotation);
 
+    const currentFrame = this.flyFrames[this.currentFrameIndex];
     this.ctx.drawImage(
-      this.sprite,
+      currentFrame,
       -this.size,
       -this.size,
       this.size * 2,
@@ -220,23 +232,37 @@ export default class FlyingObject {
       this.hasBeenHovered = true;
       this.hasEverBeenHovered = true; // Once hovered, always eligible for removal
 
-      // Pick a random direction to fly away
+      // Pick a random direction to fly away - ensure target is well outside canvas
       const angle = Math.random() * Math.PI * 2;
-      const distance = window.innerWidth * 2;
+      const canvasWidth = this.ctx.canvas.width;
+      const canvasHeight = this.ctx.canvas.height;
 
-      this.targetX = this.x + Math.cos(angle) * distance;
-      this.targetY = this.y + Math.sin(angle) * distance;
+      // Calculate distance needed to go well beyond canvas edge
+      const maxDimension = Math.max(canvasWidth, canvasHeight);
+      const distance = maxDimension * 2; // Fly far beyond the canvas
 
-      this.targetX = math.clamp(
-        this.targetX,
-        -window.innerWidth * 2,
-        window.innerWidth * 2
-      );
-      this.targetY = math.clamp(
-        this.targetY,
-        -window.innerHeight * 2,
-        window.innerHeight * 2
-      );
+      let targetX = this.x + Math.cos(angle) * distance;
+      let targetY = this.y + Math.sin(angle) * distance;
+
+      // Ensure target is at least 200px outside the canvas bounds
+      const margin = 200;
+      if (targetX > -margin && targetX < canvasWidth + margin) {
+        // Target is within horizontal bounds, push it out
+        targetX =
+          Math.cos(angle) > 0
+            ? canvasWidth + margin + distance
+            : -margin - distance;
+      }
+      if (targetY > -margin && targetY < canvasHeight + margin) {
+        // Target is within vertical bounds, push it out
+        targetY =
+          Math.sin(angle) > 0
+            ? canvasHeight + margin + distance
+            : -margin - distance;
+      }
+
+      this.targetX = targetX;
+      this.targetY = targetY;
       this.targetForceMultiplier = 0.01;
       this.randomForce = 10;
     }

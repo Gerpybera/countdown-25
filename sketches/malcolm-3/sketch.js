@@ -47,6 +47,37 @@ let allTraces = []; // Global array to store all traces separately
 let isTomatoThrowable = true;
 let isCleanupMode = false;
 
+// Cleanup slide sounds (multiple variations)
+const slideSoundPaths = [
+  "./assets/AUDIO/slide.wav",
+  "./assets/AUDIO/slide2.wav",
+  "./assets/AUDIO/slide3.wav",
+  "./assets/AUDIO/slide4.wav",
+  "./assets/AUDIO/slide5.wav",
+];
+let cleanupSlideSound = new Audio(slideSoundPaths[0]);
+cleanupSlideSound.loop = true;
+cleanupSlideSound.volume = 0;
+
+function pickRandomSlideSound() {
+  const randomIndex = Math.floor(Math.random() * slideSoundPaths.length);
+  const wasPlaying = !cleanupSlideSound.paused;
+  const currentVolume = cleanupSlideSound.volume;
+  cleanupSlideSound.pause();
+  cleanupSlideSound = new Audio(slideSoundPaths[randomIndex]);
+  cleanupSlideSound.loop = true;
+  cleanupSlideSound.volume = currentVolume;
+  if (wasPlaying) {
+    cleanupSlideSound.play();
+  }
+}
+
+// Track mouse movement for cleanup sound
+let lastMouseX = 0;
+let lastMouseY = 0;
+let lastDirX = 0;
+let lastDirY = 0;
+
 console.log(canvas.width, canvas.height);
 function update(dt) {
   /*
@@ -112,10 +143,52 @@ function update(dt) {
 
   if (isCleanupMode) {
     visualCleanUpObject();
+
+    // Calculate mouse movement speed
+    const mouseX = input.getX();
+    const mouseY = input.getY();
+    const dx = mouseX - lastMouseX;
+    const dy = mouseY - lastMouseY;
+    const mouseSpeed = Math.sqrt(dx * dx + dy * dy);
+
+    // Detect direction change (sign change in dx or dy)
+    const dirX = Math.sign(dx);
+    const dirY = Math.sign(dy);
+    if (
+      (dirX !== 0 && dirX !== lastDirX) ||
+      (dirY !== 0 && dirY !== lastDirY)
+    ) {
+      pickRandomSlideSound();
+    }
+    if (dirX !== 0) lastDirX = dirX;
+    if (dirY !== 0) lastDirY = dirY;
+
+    // Update volume based on mouse movement speed
+    const targetVolume = Math.min(mouseSpeed / 20, 0.6);
+    cleanupSlideSound.volume = targetVolume;
+
+    // Play/pause based on movement
+    if (mouseSpeed > 1) {
+      if (cleanupSlideSound.paused) {
+        cleanupSlideSound.play();
+      }
+    } else {
+      cleanupSlideSound.volume = 0;
+    }
+
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+  } else {
+    // Stop cleanup sound when not in cleanup mode
+    if (!cleanupSlideSound.paused) {
+      cleanupSlideSound.pause();
+      cleanupSlideSound.currentTime = 0;
+    }
   }
 
   // Finish when all traces are cleaned up
   if (isCleanupMode && allTraces.length === 0) {
+    cleanupSlideSound.pause();
     finish();
   }
 }
