@@ -57,6 +57,7 @@ function update(dt) {
 
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  createContainer();
 
   // Update mouse position for collision
   updateMousePosition(input.getX(), input.getY());
@@ -179,6 +180,10 @@ function createLever() {
   }
 
   if (isSvgDeleteMode && leverPosY + posY > detectionZoneMinY) {
+    containerRotation += 0.02;
+    if (containerRotation > Math.PI / 6) {
+      containerRotation = Math.PI / 6;
+    }
     objects.forEach((obj) => {
       // delete collision with svg
       obj.disableSvgCollision();
@@ -187,7 +192,8 @@ function createLever() {
   if (isSvgDeleteMode) {
     if (objects.length === 0) {
       posY += 5;
-      if (posY > canvas.height + leverLength) {
+      containerPosY += 5;
+      if (posY > canvas.height + leverLength && containerPosY > canvas.height) {
         finish();
       }
     }
@@ -235,4 +241,52 @@ function rollNumberChoice() {
   } else {
     return false;
   }
+}
+
+let containerRotation = 0;
+let containerPosX = canvas.width / 2;
+let containerPosY = canvas.height / 2;
+
+const containerImgLeft = new Image();
+containerImgLeft.src = "./assets/PNG/container-left.png";
+
+const containerImgRight = new Image();
+containerImgRight.src = "./assets/PNG/container-right.png";
+
+function createContainer() {
+  let containerWidth = imgGlobalSize / 2;
+  let containerHeight = imgGlobalSize;
+  const marginWidth = 70;
+  const marginHeight = 50;
+
+  let containerRotationInv = -containerRotation;
+
+  ctx.save();
+  ctx.translate(
+    containerPosX - marginWidth,
+    containerPosY - containerHeight / 2 + marginHeight
+  );
+
+  ctx.rotate(containerRotation);
+  ctx.drawImage(
+    containerImgLeft,
+    -containerWidth,
+    0,
+    containerWidth,
+    containerHeight
+  );
+  //ctx.fillRect(-containerWidth, 0, containerWidth, containerHeight);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(
+    containerPosX + marginWidth,
+    containerPosY - containerHeight / 2 + marginHeight
+  );
+
+  ctx.rotate(containerRotationInv);
+  ctx.drawImage(containerImgRight, 0, 0, containerWidth, containerHeight);
+  //ctx.fillRect(0, 0, containerWidth, containerHeight);
+  ctx.restore();
+  //containerRotation += 0.01;
 }
