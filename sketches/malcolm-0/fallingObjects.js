@@ -184,7 +184,7 @@ export function updateSharedPhysics() {
 }
 
 export default class FallingObject {
-  constructor(ctx, x, y, size) {
+  constructor(ctx, x, y, size, isATrashBag = true) {
     this.ctx = ctx;
     this.physics = getSharedPhysics(ctx);
     this.body = this.physics.createBody({
@@ -192,12 +192,27 @@ export default class FallingObject {
       positionY: y,
       radius: size / 2,
     });
-    this.size = size;
+    if (isATrashBag) {
+      this.size = size;
+    } else {
+      this.size = this.ctx.canvas.width * 0.025;
+    }
     this.color = "blue";
     this.sprite = null;
     this.randomSprite = this.getRandomSprite();
+    this.isATrashBag = isATrashBag;
+    this.rotation = Math.random() * Math.PI * 2; // Initial random rotation
   }
   update() {
+    // Calculate rotation based on velocity
+    const lastX = this.body.lastPositionX ?? this.body.positionX;
+    const lastY = this.body.lastPositionY ?? this.body.positionY;
+    const velocityX = this.body.positionX - lastX;
+    const velocityY = this.body.positionY - lastY;
+
+    // Add rotation based on horizontal velocity
+    this.rotation += velocityX * 0.05;
+
     // Physics is updated globally, just draw
     this.draw();
   }
@@ -205,29 +220,27 @@ export default class FallingObject {
     this.body.svgCollisionDisabled = true;
   }
   draw() {
+    const scaleImg = this.size * 2;
     this.sprite = new Image();
 
-    this.sprite.src = `./assets/PNG/object${this.randomSprite}.png`;
+    if (this.isATrashBag) {
+      this.sprite.src = `./assets/PNG/trashbag.png`;
+    } else {
+      this.sprite.src = `./assets/PNG/object${this.randomSprite}.png`;
+    }
     //this.sprite.src = `./assets/PNG/test.png`;
+
+    this.ctx.save();
+    this.ctx.translate(this.body.positionX, this.body.positionY);
+    this.ctx.rotate(this.rotation);
     this.ctx.drawImage(
       this.sprite,
-      this.body.positionX - this.size / 2,
-      this.body.positionY - this.size / 2,
-      this.size,
-      this.size
+      -scaleImg / 2,
+      -scaleImg / 2,
+      scaleImg,
+      scaleImg
     );
-    /*
-    this.ctx.fillStyle = this.color;
-    this.ctx.beginPath();
-    this.ctx.arc(
-      this.body.positionX,
-      this.body.positionY,
-      this.size / 2,
-      0,
-      Math.PI * 2
-    );
-    this.ctx.fill();
-    */
+    this.ctx.restore();
   }
   getRandomSprite() {
     const max = 7;

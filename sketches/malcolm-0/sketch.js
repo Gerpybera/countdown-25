@@ -30,10 +30,10 @@ const SPAWN_DELAY = 10; // milliseconds between spawns
 function startSpawning() {
   if (spawnInterval) return; // Already spawning
   spawnInterval = setInterval(() => {
-    const x = 900 + Math.random() * 200; // Spawn within a range
-    const y = Math.random(20, -20); // Spawn above the canvas
+    const x = Math.random() * canvas.width; // Spawn within a range
+    const y = Math.random() * -20; // Spawn above the canvas
     const size = ctx.canvas.width * 0.025;
-    objects.push(new FallingObject(ctx, x, y, size));
+    objects.push(new FallingObject(ctx, x, y, size, rollNumberChoice()));
   }, SPAWN_DELAY);
 }
 
@@ -44,36 +44,9 @@ function stopSpawning() {
   }
 }
 
-const spring = new Spring({
-  position: 0,
-});
-
-const settings1 = createSpringSettings({
-  frequency: 3.5,
-  halfLife: 0.05,
-});
-const settings2 = createSpringSettings({
-  frequency: 0.2,
-  halfLife: 1.15,
-});
-
 run(update);
 
 function update(dt) {
-  if (input.isPressed()) {
-    spring.target = -0.1;
-    spring.settings = settings2;
-  } else {
-    spring.target = 1;
-    spring.settings = settings1;
-  }
-
-  spring.step(dt);
-
-  const x = canvas.width / 2;
-  const y = canvas.height / 2;
-  const scale = Math.max(spring.position, 0);
-
   let bgColor = "black";
 
   if (activated) {
@@ -106,6 +79,8 @@ function update(dt) {
 let leverPosX = 0;
 let leverPosY = -250;
 let circleSize = 50;
+
+let isPullable = false;
 
 let activated = false;
 let posY = 0;
@@ -176,10 +151,12 @@ function createLever() {
   }
 
   if (input.isPressed()) {
-    if (isHovering) {
-      document.body.style.cursor = "grabbing";
-    }
+    document.body.style.cursor = "grabbing";
+
     if (isHovering && isInsideConstraint) {
+      isPullable = true;
+    }
+    if (isPullable && isInsideConstraint) {
       colorCheck = "red";
       leverPosY = input.getY() - posY;
     }
@@ -187,6 +164,10 @@ function createLever() {
     if (leverPosY > -leverLength + circleSize + padding) {
       leverPosY -= 5;
     }
+  }
+  if (input.isUp()) {
+    isPullable = false;
+    document.body.style.cursor = "default";
   }
 
   if (
@@ -245,4 +226,13 @@ function createLever() {
     circleSize * 2
   );
   ctx.restore();
+}
+
+function rollNumberChoice() {
+  const randomNum = Math.floor(Math.random() * 3);
+  if (randomNum === 0 || randomNum === 1) {
+    return true;
+  } else {
+    return false;
+  }
 }
