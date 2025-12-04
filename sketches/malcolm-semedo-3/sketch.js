@@ -42,7 +42,7 @@ for (let i = 0; i < NUM_SPRITES; i++) {
 
 let tomato = [];
 let stuckTomatoCount = 0;
-const limiteStuckTomatoes = 30;
+const limiteStuckTomatoes = 50;
 let allTraces = []; // Global array to store all traces separately
 let isTomatoThrowable = true;
 let isCleanupMode = false;
@@ -133,7 +133,8 @@ function getDifferentSplashImage() {
   }
 }
 
-const cleanupRadius = ctx.canvas.width * 0.1;
+const cleanupRadius = ctx.canvas.width * 0.08;
+console.log("Cleanup radius:", cleanupRadius);
 function cleanUpTraces() {
   const mouseX = input.getX();
   const mouseY = input.getY();
@@ -151,15 +152,18 @@ function cleanUpTraces() {
   }
 }
 
+const cleaningTowelImg = new Image();
+cleaningTowelImg.src = "./assets/PNG/cleaning-towel.png";
 function visualCleanUpObject() {
   const mouseX = input.getX();
   const mouseY = input.getY();
 
-  ctx.fillStyle = "yellow";
-  ctx.fillRect(
-    mouseX - cleanupRadius / 2,
-    mouseY - cleanupRadius / 2,
-    cleanupRadius,
-    cleanupRadius
+  const imgSize = cleanupRadius * 1.5;
+  ctx.drawImage(
+    cleaningTowelImg,
+    mouseX - imgSize / 2,
+    mouseY - imgSize / 2,
+    imgSize,
+    imgSize
   );
 }

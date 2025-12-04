@@ -129,10 +129,14 @@ function createLever() {
   const posX = canvas.width * 0.1;
   const STOREDPosY = canvas.height / 2 + leverLength / 2;
 
-  if (posY < STOREDPosY) {
-    posY += 5;
-  } else {
-    posY = STOREDPosY;
+  // Only clamp posY if not in exit animation (delete mode with no objects)
+  const isExiting = isSvgDeleteMode && objects.length === 0;
+  if (!isExiting) {
+    if (posY < STOREDPosY) {
+      posY += 5;
+    } else {
+      posY = STOREDPosY;
+    }
   }
 
   let colorCheck = "darkgray";
@@ -201,7 +205,10 @@ function createLever() {
   }
   if (isSvgDeleteMode) {
     if (objects.length === 0) {
-      finish();
+      posY += 5;
+      if (posY > canvas.height + leverLength) {
+        finish();
+      }
     }
   }
 

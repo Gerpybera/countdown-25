@@ -5,8 +5,42 @@ export default class Leaves {
   constructor(ctx, input, x, y, preloadedLeafSound) {
     this.ctx = ctx;
     this.input = input;
-    this.posX = x || ctx.canvas.width / 2;
-    this.posY = y || ctx.canvas.height / 2;
+    // Store target position (where the leaf should end up)
+    this.targetX = x || ctx.canvas.width / 2;
+    this.targetY = y || ctx.canvas.height / 2;
+
+    // Start outside the canvas (random edge)
+    const edge = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
+    const margin = 100;
+    switch (edge) {
+      case 0: // top
+        this.posX = Math.random() * ctx.canvas.width;
+        this.posY = -margin;
+        break;
+      case 1: // right
+        this.posX = ctx.canvas.width + margin;
+        this.posY = Math.random() * ctx.canvas.height;
+        break;
+      case 2: // bottom
+        this.posX = Math.random() * ctx.canvas.width;
+        this.posY = ctx.canvas.height + margin;
+        break;
+      case 3: // left
+        this.posX = -margin;
+        this.posY = Math.random() * ctx.canvas.height;
+        break;
+    }
+
+    // Entry animation state
+    this.isEntering = true;
+    this.entrySpeed = 0.005 + Math.random() * 0.01; // Slower speeds for each leaf
+    this.entryProgress = 0;
+    this.startX = this.posX;
+    this.startY = this.posY;
+    this.entryDelay = 0.5 + Math.random() * 1; // Delay 0.5-1.5 seconds before starting
+    this.entryDelayTimer = 0;
+    this.isWaitingToEnter = true;
+
     this.velocityX = 0;
     this.velocityY = 0;
     this.imgGlobalSize = this.ctx.canvas.width * 0.8;
@@ -70,6 +104,33 @@ export default class Leaves {
   update() {
     this.mouseX = this.input.getX();
     this.mouseY = this.input.getY();
+
+    // Wait for delay before starting entry animation
+    if (this.isWaitingToEnter) {
+      this.entryDelayTimer += 0.016; // ~60fps
+      if (this.entryDelayTimer >= this.entryDelay) {
+        this.isWaitingToEnter = false;
+      }
+      return; // Don't update or draw yet
+    }
+
+    // Handle entry animation first
+    if (this.isEntering) {
+      this.entryProgress += this.entrySpeed;
+      if (this.entryProgress >= 1) {
+        this.entryProgress = 1;
+        this.isEntering = false;
+        this.posX = this.targetX;
+        this.posY = this.targetY;
+      } else {
+        // Ease out interpolation for smooth arrival
+        const eased = 1 - Math.pow(1 - this.entryProgress, 3);
+        this.posX = this.startX + (this.targetX - this.startX) * eased;
+        this.posY = this.startY + (this.targetY - this.startY) * eased;
+      }
+      return; // Skip other updates during entry
+    }
+
     this.handleBoundaries();
     this.isInsideArea = this.isLeafInsideSVG(
       this.posX,
@@ -92,6 +153,9 @@ export default class Leaves {
   }
 
   draw() {
+    // Don't draw while waiting to enter
+    if (this.isWaitingToEnter) return;
+
     this.ctx.save();
     this.ctx.translate(this.posX, this.posY);
     this.ctx.rotate(this.randomAngle);

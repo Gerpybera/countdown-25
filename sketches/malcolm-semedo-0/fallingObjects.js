@@ -15,7 +15,7 @@ const svgOriginalSize = 500;
 
 // Count of bodies inside the outer SVG
 let bodiesInsideCount = 0;
-let targetBodiesCount = 200; // Default target
+let targetBodiesCount = 180; // Default target
 
 // Mouse collision
 let mouseX = 0;
