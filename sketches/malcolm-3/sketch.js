@@ -24,6 +24,7 @@ const NUM_SPRITES = 4; // Number of sprite variations (adjust based on your asse
 const preloadedImages = {
   tomatoes: [],
   splashes: [],
+  traces: [],
 };
 
 // Preload all sprite variations
@@ -40,9 +41,17 @@ for (let i = 0; i < NUM_SPRITES; i++) {
   preloadedImages.splashes.push(splashImg);
 }
 
+// Preload trace images (trace.png to trace4.png)
+for (let i = 0; i < 4; i++) {
+  const traceImg = new Image();
+  traceImg.src =
+    i === 0 ? "./assets/PNG/trace.png" : `./assets/PNG/trace${i + 1}.png`;
+  preloadedImages.traces.push(traceImg);
+}
+
 let tomato = [];
 let stuckTomatoCount = 0;
-const limiteStuckTomatoes = 50;
+const limiteStuckTomatoes = 33;
 let allTraces = []; // Global array to store all traces separately
 let isTomatoThrowable = true;
 let isCleanupMode = false;
@@ -114,11 +123,18 @@ function update(dt) {
 
   // Draw all traces from global array
   allTraces.forEach((trace) => {
-    ctx.fillStyle = `rgba(255, 0, 0, ${trace.alpha})`;
-    ctx.beginPath();
-    ctx.arc(trace.x, trace.y, trace.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.closePath();
+    ctx.save();
+    ctx.globalAlpha = trace.alpha;
+    const img = trace.image || preloadedImages.traces[0];
+    const imgSize = trace.size * 2;
+    ctx.drawImage(
+      img,
+      trace.x - imgSize / 2,
+      trace.y - imgSize / 2,
+      imgSize,
+      imgSize
+    );
+    ctx.restore();
   });
 
   // Update and draw the tomato

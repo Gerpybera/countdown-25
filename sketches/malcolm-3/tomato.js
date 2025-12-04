@@ -5,6 +5,7 @@ export default class Tomato {
     this.ctx = ctx;
     this.input = input;
     this.globalTraces = globalTraces; // Reference to global traces array
+    this.preloadedImages = preloadedImages; // Store reference to preloaded images
     this.isSticking = false;
     this.isbeingThrown = false;
     this.isInsideArea = false;
@@ -67,8 +68,8 @@ export default class Tomato {
       this.isPlayingSplash = false;
     }
     if (this.isMoving) {
-      // Map velocity (0 to ~10) to volume (0 to 1), capped at 1
-      this.slideSFX.volume = Math.min(this.velocity / 10, 1);
+      // Map velocity (0 to ~10) to volume (0 to 0.3), capped at 0.3
+      this.slideSFX.volume = Math.min(this.velocity / 10, 0.3);
       this.slideSFX.play();
     } else {
       this.slideSFX.pause();
@@ -208,14 +209,21 @@ export default class Tomato {
     // Don't create traces if tomato is below the canvas
     if (this.posY > this.ctx.canvas.height) return;
 
-    console.log("Creating tomato trace at:", this.posX, this.posY);
+    // Only create trace every few frames to reduce lag
+    if (!this.traceFrameCount) this.traceFrameCount = 0;
+    this.traceFrameCount++;
+    if (this.traceFrameCount % 3 !== 0) return; // Create trace every 3rd frame
 
-    // Create a trace object with position, size, and opacity
+    // Create a trace object with position, size, opacity, and random image
+    const randomTraceIndex = Math.floor(
+      Math.random() * this.preloadedImages.traces.length
+    );
     const trace = {
       x: this.posX,
       y: this.posY,
       size: this.size,
       alpha: 0.1,
+      image: this.preloadedImages.traces[randomTraceIndex],
     };
 
     // Push the trace to the global traces array

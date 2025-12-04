@@ -15,7 +15,7 @@ const svgOriginalSize = 500;
 
 // Count of bodies inside the outer SVG
 let bodiesInsideCount = 0;
-let targetBodiesCount = 180; // Default target
+let targetBodiesCount = 340; // Default target
 
 // Mouse collision
 let mouseX = 0;
@@ -189,9 +189,18 @@ const POOL_SIZE = 5;
 let lastCollisionTime = 0;
 const COLLISION_COOLDOWN = 50; // ms between collision sounds
 
-// Initialize sound pool
+// Sound paths for randomization
+const collisionSoundPaths = [
+  "./assets/AUDIO/trash-impact.wav",
+  "./assets/AUDIO/trash-impact2.wav",
+  "./assets/AUDIO/trash-impact3.wav",
+  "./assets/AUDIO/trash-impact4.wav",
+];
+
+// Initialize sound pool with random sounds
 for (let i = 0; i < POOL_SIZE; i++) {
-  const sound = new Audio("./assets/AUDIO/placeholder.wav");
+  const randomPath = collisionSoundPaths[Math.floor(Math.random() * collisionSoundPaths.length)];
+  const sound = new Audio(randomPath);
   sound.volume = 0.3;
   collisionSoundPool.push(sound);
 }
@@ -203,6 +212,8 @@ function playCollisionSound(intensity) {
   if (now - lastCollisionTime < COLLISION_COOLDOWN) return;
 
   const sound = collisionSoundPool[currentSoundIndex];
+  // Randomize the sound source each time it's played
+  sound.src = collisionSoundPaths[Math.floor(Math.random() * collisionSoundPaths.length)];
   sound.volume = Math.min(intensity * 0.1, 0.5);
   sound.currentTime = 0;
   sound.play().catch(() => {}); // Ignore autoplay errors
@@ -223,7 +234,9 @@ export default class FallingObject {
     if (isATrashBag) {
       this.size = size;
     } else {
-      this.size = this.ctx.canvas.width * 0.025;
+      this.size =
+        this.ctx.canvas.width * 0.02 +
+        Math.random() * (this.ctx.canvas.width * 0.005);
     }
     this.color = "blue";
     this.sprite = null;
@@ -259,7 +272,12 @@ export default class FallingObject {
     this.body.svgCollisionDisabled = true;
   }
   draw() {
-    const scaleImg = this.size * 2;
+    let scaleImg;
+    if (this.isATrashBag) {
+      scaleImg = this.size * 2;
+    } else {
+      scaleImg = this.size * 1;
+    }
     this.sprite = new Image();
 
     if (this.isATrashBag) {

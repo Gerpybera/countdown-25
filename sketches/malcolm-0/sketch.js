@@ -32,7 +32,7 @@ function startSpawning() {
   spawnInterval = setInterval(() => {
     const x = Math.random() * canvas.width; // Spawn within a range
     const y = Math.random() * -20; // Spawn above the canvas
-    const size = ctx.canvas.width * 0.025;
+    const size = ctx.canvas.width * 0.02;
     objects.push(new FallingObject(ctx, x, y, size, rollNumberChoice()));
   }, SPAWN_DELAY);
 }
@@ -59,6 +59,20 @@ machineRunning.volume = 0.5;
 const openingSFX = new Audio("./assets/AUDIO/open.wav");
 openingSFX.volume = 0.5;
 
+const leverGoingDownSFX = new Audio("./assets/AUDIO/lever-going-down.wav");
+leverGoingDownSFX.volume = 0.3;
+leverGoingDownSFX.loop = true;
+
+const containerGoingDownSFX = new Audio(
+  "./assets/AUDIO/container-going-down.wav"
+);
+containerGoingDownSFX.volume = 0.3;
+containerGoingDownSFX.loop = true;
+
+// Track previous positions for sound
+let lastPosY = 0;
+let lastContainerPosY = -imgGlobalSize;
+
 function update(dt) {
   let bgColor = "black";
 
@@ -78,7 +92,7 @@ function update(dt) {
   // Update physics for all objects
   updateSharedPhysics();
 
-  //console.log("Total objects:", objects.length);
+  console.log("Total objects:", objects.length);
 
   objects.forEach((obj) => {
     obj.update();
@@ -119,8 +133,8 @@ function createLever() {
 
   const leverLength = canvas.width * 0.2;
   const leverWidth = leverLength / 2;
-  const posX = canvas.width * 0.1;
-  const STOREDPosY = canvas.height / 2 + leverLength / 2;
+  const posX = canvas.width * 0.08;
+  const STOREDPosY = canvas.height * 0.25 + leverLength / 2;
 
   // Only clamp posY if not in exit animation (delete mode with no objects)
   const isExiting = isSvgDeleteMode && objects.length === 0;
@@ -132,7 +146,19 @@ function createLever() {
     }
   }
 
-  let colorCheck = "darkgray";
+  // Lever going down sound (at beginning entry or end exit)
+  const isLeverMovingDown = posY !== lastPosY;
+  if (isLeverMovingDown) {
+    if (leverGoingDownSFX.paused) {
+      leverGoingDownSFX.play();
+    }
+  } else {
+    if (!leverGoingDownSFX.paused) {
+      leverGoingDownSFX.pause();
+      leverGoingDownSFX.currentTime = 0;
+    }
+  }
+  lastPosY = posY;
 
   /*
   const plateRectangle = new Image();
@@ -175,7 +201,6 @@ function createLever() {
       isPullable = true;
     }
     if (isPullable && isInsideConstraint) {
-      colorCheck = "red";
       leverPosY = input.getY() - posY;
     }
   } else {
@@ -210,7 +235,10 @@ function createLever() {
     if (objects.length === 0) {
       posY += 5;
       containerPosY += 5;
-      if (posY > canvas.height + leverLength && containerPosY > canvas.height) {
+      if (
+        posY > canvas.height + leverLength &&
+        containerPosY > canvas.height + imgGlobalSize
+      ) {
         finish();
       }
     }
@@ -261,7 +289,7 @@ function createLever() {
   const leverMinY = -leverLength + circleSize + padding; // Top limit
   const leverMaxY = -circleSize - padding * 2; // Bottom limit
 
-  console.log("leverPosY:", leverPosY, "MinY:", leverMinY, "MaxY:", leverMaxY);
+  //console.log("leverPosY:", leverPosY, "MinY:", leverMinY, "MaxY:", leverMaxY);
 
   const isAtLimit = leverPosY <= leverMinY || leverPosY >= leverMaxY;
 
@@ -317,7 +345,7 @@ containerImgRight.src = "./assets/PNG/container-right.png";
 function createContainer() {
   let containerWidth = imgGlobalSize / 2;
   let containerHeight = imgGlobalSize;
-  const marginWidth = 70;
+  const marginWidth = 0;
   const marginHeight = 50;
 
   // Animate container from top to target position (unless exiting)
@@ -329,6 +357,20 @@ function createContainer() {
       containerPosY = containerTargetY;
     }
   }
+
+  // Container going down sound (at beginning entry or end exit)
+  const isContainerMovingDown = containerPosY !== lastContainerPosY;
+  if (isContainerMovingDown) {
+    if (containerGoingDownSFX.paused) {
+      containerGoingDownSFX.play();
+    }
+  } else {
+    if (!containerGoingDownSFX.paused) {
+      containerGoingDownSFX.pause();
+      containerGoingDownSFX.currentTime = 0;
+    }
+  }
+  lastContainerPosY = containerPosY;
 
   let containerRotationInv = -containerRotation;
 

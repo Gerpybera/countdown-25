@@ -289,8 +289,8 @@ export default class FlyingObject {
     const speed = this.getSpeed();
     // Only play audio if fly is inside canvas and moving
     if (speed > 0.5 && this.isInsideCanvas()) {
-      // Map speed (0-10) to volume (0-0.25), clamped to prevent loud audio
-      const volume = math.clamp((speed / 10) * 0.25, 0, 0.25);
+      // Map speed (0-10) to volume (0-0.15), clamped to prevent loud audio
+      const volume = math.clamp((speed / 10) * 0.15, 0, 0.15);
       this.audio.volume = volume;
 
       if (this.audio.paused) {
