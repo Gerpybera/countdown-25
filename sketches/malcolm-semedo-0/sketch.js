@@ -21,8 +21,6 @@ onSvgLoad(() => {
   //console.log("SVG collision initialized");
 });
 
-const test = new FallingObject(ctx, canvas.width / 2, 0, 50);
-
 const objects = [];
 const MAX_OBJECTS = 5000;
 
@@ -200,7 +198,13 @@ function createLever() {
   }
 
   if (isSvgDeleteMode && leverPosY + posY > detectionZoneMinY) {
-    console.log("SVG DELETE MODE ACTIVATED");
+    objects.forEach((obj) => {
+      // delete collision with svg
+      obj.disableSvgCollision();
+    });
+    if (objects.length === 0) {
+      finish();
+    }
   }
 
   //DRAWING PART

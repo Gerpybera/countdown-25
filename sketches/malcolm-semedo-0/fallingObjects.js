@@ -79,6 +79,9 @@ export function getSharedPhysics(ctx) {
 function checkSvgCollision(body) {
   if (!sharedCtx) return;
 
+  // Skip SVG collision if disabled for this body
+  if (body.svgCollisionDisabled) return;
+
   // Transform body position to SVG coordinates
   const svgX = (body.positionX - svgOffsetX) / svgScale;
   const svgY = (body.positionY - svgOffsetY) / svgScale;
@@ -191,13 +194,13 @@ export default class FallingObject {
     });
     this.size = size;
     this.color = "blue";
-    if (hasReachedTargetBodies()) {
-      this.color = "green";
-    }
   }
   update() {
     // Physics is updated globally, just draw
     this.draw();
+  }
+  disableSvgCollision() {
+    this.body.svgCollisionDisabled = true;
   }
   draw() {
     this.ctx.fillStyle = this.color;
