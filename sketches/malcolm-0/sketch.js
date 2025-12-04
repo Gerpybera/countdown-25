@@ -46,6 +46,13 @@ function stopSpawning() {
 
 run(update);
 
+const leverMovingSFX = new Audio("./assets/AUDIO/lever-moving.wav");
+leverMovingSFX.volume = 0.2;
+leverMovingSFX.loop = true;
+
+const leverStopSFX = new Audio("./assets/AUDIO/lever-click.wav");
+leverStopSFX.volume = 0.3;
+
 function update(dt) {
   let bgColor = "black";
 
@@ -65,7 +72,7 @@ function update(dt) {
   // Update physics for all objects
   updateSharedPhysics();
 
-  console.log("Total objects:", objects.length);
+  //console.log("Total objects:", objects.length);
 
   objects.forEach((obj) => {
     obj.update();
@@ -79,9 +86,11 @@ function update(dt) {
 
 let leverPosX = 0;
 let leverPosY = -250;
+let lastLeverPosY = leverPosY; // Track previous lever position
 let circleSize = 50;
 
 let isPullable = false;
+let wasAtLimit = false; // Track if lever was at a limit position
 
 let activated = false;
 let posY = 0;
@@ -172,7 +181,7 @@ function createLever() {
   }
 
   if (
-    leverPosY < -leverLength + circleSize + padding &&
+    leverPosY < -leverLength + circleSize + padding * 3 &&
     hasReachedTargetBodies()
   ) {
     isSvgDeleteMode = true;
@@ -232,6 +241,32 @@ function createLever() {
     circleSize * 2
   );
   ctx.restore();
+
+  // AUDIO PART
+  const leverMinY = -leverLength + circleSize + padding; // Top limit
+  const leverMaxY = -circleSize - padding * 2; // Bottom limit
+
+  console.log("leverPosY:", leverPosY, "MinY:", leverMinY, "MaxY:", leverMaxY);
+
+  const isAtLimit = leverPosY <= leverMinY || leverPosY >= leverMaxY;
+
+  // Lever moving sound - play when lever position changes
+  const isLeverMoving = leverPosY !== lastLeverPosY;
+  if (isLeverMoving && !isAtLimit) {
+    if (leverMovingSFX.paused) {
+      leverMovingSFX.play();
+    }
+  } else {
+    leverMovingSFX.pause();
+  }
+  lastLeverPosY = leverPosY;
+
+  // Only play sound when just reaching a limit (not while staying there)
+  if (isAtLimit && !wasAtLimit) {
+    leverStopSFX.currentTime = 0;
+    leverStopSFX.play();
+  }
+  wasAtLimit = isAtLimit;
 }
 
 function rollNumberChoice() {

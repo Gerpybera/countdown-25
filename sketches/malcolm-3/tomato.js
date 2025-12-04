@@ -36,9 +36,30 @@ export default class Tomato {
     this.setup();
   }
   preload() {
-    this.splashSFX = new Audio("./assets/AUDIO/splash.wav");
-    this.slideSFX = new Audio("./assets/AUDIO/slide.wav");
+    // Pick a random splash sound
+    this.splashSounds = [
+      "./assets/AUDIO/splash.wav",
+      //"./assets/AUDIO/splash2.wav",
+    ];
+    this.pickRandomSplashSound();
+    // Pick a random slide sound
+    this.slideSounds = [
+      "./assets/AUDIO/slide.wav",
+      "./assets/AUDIO/slide2.wav",
+      "./assets/AUDIO/slide3.wav",
+      "./assets/AUDIO/slide4.wav",
+      "./assets/AUDIO/slide5.wav",
+    ];
+    this.pickRandomSlideSound();
     //this.throwSFX = new Audio("./assets/AUDIO/throw.mp3");
+  }
+  pickRandomSplashSound() {
+    const randomIndex = Math.floor(Math.random() * this.splashSounds.length);
+    this.splashSFX = new Audio(this.splashSounds[randomIndex]);
+  }
+  pickRandomSlideSound() {
+    const randomIndex = Math.floor(Math.random() * this.slideSounds.length);
+    this.slideSFX = new Audio(this.slideSounds[randomIndex]);
   }
   playSounds() {
     if (this.isSticking && this.isPlayingSplash) {
