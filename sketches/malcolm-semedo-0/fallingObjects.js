@@ -15,7 +15,7 @@ const svgOriginalSize = 500;
 
 // Count of bodies inside the outer SVG
 let bodiesInsideCount = 0;
-let targetBodiesCount = 580; // Default target
+let targetBodiesCount = 200; // Default target
 
 // Mouse collision
 let mouseX = 0;
@@ -194,6 +194,8 @@ export default class FallingObject {
     });
     this.size = size;
     this.color = "blue";
+    this.sprite = null;
+    this.randomSprite = this.getRandomSprite();
   }
   update() {
     // Physics is updated globally, just draw
@@ -203,6 +205,18 @@ export default class FallingObject {
     this.body.svgCollisionDisabled = true;
   }
   draw() {
+    this.sprite = new Image();
+
+    this.sprite.src = `./assets/PNG/object${this.randomSprite}.png`;
+    //this.sprite.src = `./assets/PNG/test.png`;
+    this.ctx.drawImage(
+      this.sprite,
+      this.body.positionX - this.size / 2,
+      this.body.positionY - this.size / 2,
+      this.size,
+      this.size
+    );
+    /*
     this.ctx.fillStyle = this.color;
     this.ctx.beginPath();
     this.ctx.arc(
@@ -213,5 +227,11 @@ export default class FallingObject {
       Math.PI * 2
     );
     this.ctx.fill();
+    */
+  }
+  getRandomSprite() {
+    const max = 7;
+    const rand = Math.floor(Math.random() * max);
+    return rand + 1;
   }
 }

@@ -20,7 +20,7 @@ function checkAllLoaded() {
   }
 }
 
-fetch("./SVG/number-0-outter.svg")
+fetch("./assets/SVG/number-0-outter.svg")
   .then((resp) => resp.text())
   .then((svgText) => {
     const parser = new DOMParser();
@@ -32,7 +32,7 @@ fetch("./SVG/number-0-outter.svg")
   })
   .catch((error) => console.error("Error loading outer SVG:", error));
 
-fetch("./SVG/number-0-inner.svg")
+fetch("./assets/SVG/number-0-inner.svg")
   .then((resp) => resp.text())
   .then((svgText) => {
     const parser = new DOMParser();

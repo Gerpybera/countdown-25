@@ -22,7 +22,6 @@ onSvgLoad(() => {
 });
 
 const objects = [];
-const MAX_OBJECTS = 5000;
 
 // Spawn objects on interval when activated
 let spawnInterval = null;
@@ -31,13 +30,10 @@ const SPAWN_DELAY = 10; // milliseconds between spawns
 function startSpawning() {
   if (spawnInterval) return; // Already spawning
   spawnInterval = setInterval(() => {
-    if (objects.length < MAX_OBJECTS) {
-      const x = 900 + Math.random() * 200; // Spawn within a range
-      const y = Math.random(20, -20); // Spawn above the canvas
-      const size = 30;
-      objects.push(new FallingObject(ctx, x, y, size));
-      //console.log("Number of objects:", objects.length);
-    }
+    const x = 900 + Math.random() * 200; // Spawn within a range
+    const y = Math.random(20, -20); // Spawn above the canvas
+    const size = ctx.canvas.width * 0.025;
+    objects.push(new FallingObject(ctx, x, y, size));
   }, SPAWN_DELAY);
 }
 
@@ -95,7 +91,7 @@ function update(dt) {
   // Update physics for all objects
   updateSharedPhysics();
 
-  //console.log("Total objects:", objects.length);
+  console.log("Total objects:", objects.length);
 
   objects.forEach((obj) => {
     obj.update();
@@ -115,13 +111,13 @@ let activated = false;
 let posY = 0;
 
 const boxImg = new Image();
-boxImg.src = "./PNG/box.png";
+boxImg.src = "./assets/PNG/box.png";
 
 const connectionImg = new Image();
-connectionImg.src = "./PNG/connection.png";
+connectionImg.src = "./assets/PNG/connection.png";
 
 const leverImg = new Image();
-leverImg.src = "./PNG/lever.png";
+leverImg.src = "./assets/PNG/lever.png";
 
 let isSvgDeleteMode = false;
 
@@ -202,6 +198,8 @@ function createLever() {
       // delete collision with svg
       obj.disableSvgCollision();
     });
+  }
+  if (isSvgDeleteMode) {
     if (objects.length === 0) {
       finish();
     }
