@@ -199,7 +199,8 @@ const collisionSoundPaths = [
 
 // Initialize sound pool with random sounds
 for (let i = 0; i < POOL_SIZE; i++) {
-  const randomPath = collisionSoundPaths[Math.floor(Math.random() * collisionSoundPaths.length)];
+  const randomPath =
+    collisionSoundPaths[Math.floor(Math.random() * collisionSoundPaths.length)];
   const sound = new Audio(randomPath);
   sound.volume = 0.3;
   collisionSoundPool.push(sound);
@@ -213,7 +214,8 @@ function playCollisionSound(intensity) {
 
   const sound = collisionSoundPool[currentSoundIndex];
   // Randomize the sound source each time it's played
-  sound.src = collisionSoundPaths[Math.floor(Math.random() * collisionSoundPaths.length)];
+  sound.src =
+    collisionSoundPaths[Math.floor(Math.random() * collisionSoundPaths.length)];
   sound.volume = Math.min(intensity * 0.1, 0.5);
   sound.currentTime = 0;
   sound.play().catch(() => {}); // Ignore autoplay errors
