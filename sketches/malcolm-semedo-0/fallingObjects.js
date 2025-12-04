@@ -13,6 +13,43 @@ let svgOffsetX = 0;
 let svgOffsetY = 0;
 const svgOriginalSize = 500;
 
+// Count of bodies inside the outer SVG
+let bodiesInsideCount = 0;
+let targetBodiesCount = 580; // Default target
+
+// Mouse collision
+let mouseX = 0;
+let mouseY = 0;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let mouseRadius = 50; // Collision radius of mouse
+let isMouseMoving = false;
+
+export function updateMousePosition(x, y) {
+  lastMouseX = mouseX;
+  lastMouseY = mouseY;
+  mouseX = x;
+  mouseY = y;
+  isMouseMoving =
+    Math.abs(x - lastMouseX) > 0.5 || Math.abs(y - lastMouseY) > 0.5;
+}
+
+export function setMouseRadius(radius) {
+  mouseRadius = radius;
+}
+
+export function setTargetBodiesCount(count) {
+  targetBodiesCount = count;
+}
+
+export function getBodiesInsideCount() {
+  return bodiesInsideCount;
+}
+
+export function hasReachedTargetBodies() {
+  return bodiesInsideCount >= targetBodiesCount;
+}
+
 export function initSvgCollision(ctx, imgGlobalSize, scale) {
   sharedCtx = ctx;
   svgScale = (imgGlobalSize * scale) / svgOriginalSize;
@@ -104,9 +141,41 @@ export function updateSharedPhysics() {
       }
     }
 
-    // SVG collision for each body
+    // Mouse collision - only when mouse is moving
+    if (isMouseMoving) {
+      for (const body of bodies) {
+        const dx = body.positionX - mouseX;
+        const dy = body.positionY - mouseY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const minDist = body.radius + mouseRadius;
+
+        if (distance < minDist && distance > 0) {
+          const overlap = minDist - distance;
+          const nx = dx / distance;
+          const ny = dy / distance;
+
+          // Push the body away from the mouse with a soft, limited force
+          const maxPush = 3; // Maximum push per frame
+          const pushStrength = Math.min(overlap * 0.3, maxPush);
+          body.positionX += pushStrength * nx;
+          body.positionY += pushStrength * ny;
+        }
+      }
+    }
+
+    // SVG collision for each body and count bodies inside outer SVG
+    bodiesInsideCount = 0;
     for (const body of bodies) {
       checkSvgCollision(body);
+
+      // Count if body has entered and is currently inside outer SVG
+      if (body.hasEnteredOuter && svgOuterPath && sharedCtx) {
+        const svgX = (body.positionX - svgOffsetX) / svgScale;
+        const svgY = (body.positionY - svgOffsetY) / svgScale;
+        if (sharedCtx.isPointInPath(svgOuterPath, svgX, svgY)) {
+          bodiesInsideCount++;
+        }
+      }
     }
   }
 }
@@ -122,6 +191,9 @@ export default class FallingObject {
     });
     this.size = size;
     this.color = "blue";
+    if (hasReachedTargetBodies()) {
+      this.color = "green";
+    }
   }
   update() {
     // Physics is updated globally, just draw

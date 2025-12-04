@@ -3,6 +3,8 @@ import { createSpringSettings, Spring } from "../_shared/spring.js";
 import FallingObject, {
   updateSharedPhysics,
   initSvgCollision,
+  hasReachedTargetBodies,
+  updateMousePosition,
 } from "./fallingObjects.js";
 import { onSvgLoad } from "./svg.js";
 
@@ -16,7 +18,7 @@ const svgScale = 1;
 // Initialize SVG collision after SVGs are loaded
 onSvgLoad(() => {
   initSvgCollision(ctx, imgGlobalSize, svgScale);
-  console.log("SVG collision initialized");
+  //console.log("SVG collision initialized");
 });
 
 const test = new FallingObject(ctx, canvas.width / 2, 0, 50);
@@ -36,7 +38,7 @@ function startSpawning() {
       const y = Math.random(20, -20); // Spawn above the canvas
       const size = 30;
       objects.push(new FallingObject(ctx, x, y, size));
-      console.log("Number of objects:", objects.length);
+      //console.log("Number of objects:", objects.length);
     }
   }, SPAWN_DELAY);
 }
@@ -81,20 +83,21 @@ function update(dt) {
   let bgColor = "black";
 
   if (activated) {
-    bgColor = "white";
     startSpawning();
   } else {
-    bgColor = "black";
     stopSpawning();
   }
 
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Update mouse position for collision
+  updateMousePosition(input.getX(), input.getY());
+
   // Update physics for all objects
   updateSharedPhysics();
 
-  console.log("Total objects:", objects.length);
+  //console.log("Total objects:", objects.length);
 
   objects.forEach((obj) => {
     obj.update();
@@ -111,14 +114,32 @@ let leverPosY = -250;
 let circleSize = 50;
 
 let activated = false;
+let posY = 0;
+
+const boxImg = new Image();
+boxImg.src = "./PNG/box.png";
+
+const connectionImg = new Image();
+connectionImg.src = "./PNG/connection.png";
+
+const leverImg = new Image();
+leverImg.src = "./PNG/lever.png";
+
+let isSvgDeleteMode = false;
 
 function createLever() {
   const padding = 20;
 
   const leverLength = 600;
-  const leverWidth = 300;
+  const leverWidth = leverLength / 2;
   const posX = canvas.width * 0.1;
-  let posY = canvas.height / 2 + leverLength / 2;
+  const STOREDPosY = canvas.height / 2 + leverLength / 2;
+
+  if (posY < STOREDPosY) {
+    posY += 5;
+  } else {
+    posY = STOREDPosY;
+  }
 
   let colorCheck = "darkgray";
 
@@ -148,8 +169,10 @@ function createLever() {
   }
   const detectionZoneMinY = posY - leverLength / 3;
   if (leverPosY + posY > detectionZoneMinY) {
-    console.log("activating lever");
-    activated = true;
+    //console.log("activating lever");
+    if (!isSvgDeleteMode) {
+      activated = true;
+    }
   } else {
     activated = false;
   }
@@ -164,8 +187,20 @@ function createLever() {
     }
   } else {
     if (leverPosY > -leverLength + circleSize + padding) {
-      leverPosY -= 2;
+      leverPosY -= 5;
     }
+  }
+
+  if (
+    leverPosY < -leverLength + circleSize + padding &&
+    hasReachedTargetBodies()
+  ) {
+    isSvgDeleteMode = true;
+    activated = false;
+  }
+
+  if (isSvgDeleteMode && leverPosY + posY > detectionZoneMinY) {
+    console.log("SVG DELETE MODE ACTIVATED");
   }
 
   //DRAWING PART
@@ -174,21 +209,31 @@ function createLever() {
   ctx.translate(posX, posY);
   // create lever rectangle
   ctx.fillStyle = "gray";
-  ctx.fillRect(-leverWidth / 2, -leverLength, leverWidth, leverLength);
+  ctx.drawImage(boxImg, -leverWidth / 2, -leverLength, leverWidth, leverLength);
+  //ctx.fillRect(-leverWidth / 2, -leverLength, leverWidth, leverLength);
 
   ctx.fillStyle = "darkgray";
 
   const rectCenterY = -leverLength / 2;
   let ConnectionHeight = leverPosY - rectCenterY;
-  console.log("ConnectionHeight:", ConnectionHeight);
+  //console.log("ConnectionHeight:", ConnectionHeight);
   //create connection between box and circle
-  ctx.fillRect(-circleSize / 4, rectCenterY, circleSize / 2, ConnectionHeight);
-  ctx.closePath();
-  ctx.fillStyle = colorCheck;
-  //create lever circle
-  ctx.beginPath();
-  ctx.arc(leverPosX, leverPosY, circleSize, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.closePath();
+  ctx.drawImage(
+    connectionImg,
+    -circleSize / 2,
+    rectCenterY,
+    circleSize,
+    ConnectionHeight
+  );
+  //
+  //ctx.fillRect(-circleSize / 4, rectCenterY, circleSize / 2, ConnectionHeight);
+
+  ctx.drawImage(
+    leverImg,
+    leverPosX - circleSize,
+    leverPosY - circleSize,
+    circleSize * 2,
+    circleSize * 2
+  );
   ctx.restore();
 }
