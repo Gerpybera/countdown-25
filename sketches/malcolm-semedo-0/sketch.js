@@ -173,8 +173,18 @@ function createLever() {
   ctx.save();
   ctx.translate(posX, posY);
   // create lever rectangle
+  ctx.fillStyle = "gray";
   ctx.fillRect(-leverWidth / 2, -leverLength, leverWidth, leverLength);
-  ctx.fillStyle = colorCheck ? (isHovering ? "red" : "darkgray") : "darkgray";
+
+  ctx.fillStyle = "darkgray";
+
+  const rectCenterY = -leverLength / 2;
+  let ConnectionHeight = leverPosY - rectCenterY;
+  console.log("ConnectionHeight:", ConnectionHeight);
+  //create connection between box and circle
+  ctx.fillRect(-circleSize / 4, rectCenterY, circleSize / 2, ConnectionHeight);
+  ctx.closePath();
+  ctx.fillStyle = colorCheck;
   //create lever circle
   ctx.beginPath();
   ctx.arc(leverPosX, leverPosY, circleSize, 0, Math.PI * 2);
