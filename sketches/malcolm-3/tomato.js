@@ -119,7 +119,7 @@ export default class Tomato {
       x: this.posX,
       y: this.posY,
       size: this.imgSize * 0.6, // Much bigger than regular traces
-      alpha: 0.8, // Higher opacity
+      alpha: 0.9, // Higher opacity
       image: this.preloadedImages.traces[randomTraceIndex],
     };
     this.globalTraces.push(splashTrace);
