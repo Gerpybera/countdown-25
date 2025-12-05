@@ -43,6 +43,7 @@ const margin = 50;
 function update(dt) {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  document.body.style.cursor = "grab";
 
   flyingObjects.forEach((obj) => {
     obj.update(dt);
