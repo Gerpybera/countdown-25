@@ -221,7 +221,7 @@ export default class Tomato {
     const trace = {
       x: this.posX,
       y: this.posY,
-      size: this.size,
+      size: this.imgSize,
       alpha: 0.1,
       image: this.preloadedImages.traces[randomTraceIndex],
     };
