@@ -51,7 +51,7 @@ for (let i = 0; i < 4; i++) {
 
 let tomato = [];
 let stuckTomatoCount = 0;
-const limiteStuckTomatoes = 33;
+const limiteStuckTomatoes = 50;
 let allTraces = []; // Global array to store all traces separately
 let isTomatoThrowable = true;
 let isCleanupMode = false;
@@ -89,6 +89,9 @@ let lastDirY = 0;
 
 console.log(canvas.width, canvas.height);
 function update(dt) {
+  if (input.isPressed()) {
+    cleanupSlideSound.play();
+  }
   /*
   if (input.isPressed()) {
     spring.target = 0;
@@ -123,17 +126,13 @@ function update(dt) {
 
   // Draw all traces from global array
   allTraces.forEach((trace) => {
-    ctx.save();
     ctx.globalAlpha = trace.alpha;
     const img = trace.image || preloadedImages.traces[0];
     const imgSize = trace.size * 2;
-    ctx.drawImage(
-      img,
-      trace.x - imgSize / 2,
-      trace.y - imgSize / 2,
-      imgSize,
-      imgSize
-    );
+    ctx.save();
+    ctx.translate(trace.x, trace.y);
+    ctx.rotate(trace.rotation);
+    ctx.drawImage(img, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
     ctx.restore();
   });
 
@@ -174,22 +173,27 @@ function update(dt) {
       (dirX !== 0 && dirX !== lastDirX) ||
       (dirY !== 0 && dirY !== lastDirY)
     ) {
-      pickRandomSlideSound();
+      //pickRandomSlideSound();
     }
     if (dirX !== 0) lastDirX = dirX;
     if (dirY !== 0) lastDirY = dirY;
 
     // Update volume based on mouse movement speed
-    const targetVolume = Math.min(mouseSpeed / 20, 0.6);
-    cleanupSlideSound.volume = targetVolume;
+    const targetVolume = Math.min(mouseSpeed / 20, 0.5);
+    cleanupSlideSound.volume = math.lerp(
+      cleanupSlideSound.volume,
+      targetVolume,
+      0.1
+    );
+    console.log("Cleanup sound volume:", cleanupSlideSound.volume);
 
     // Play/pause based on movement
     if (mouseSpeed > 1) {
-      if (cleanupSlideSound.paused) {
-        cleanupSlideSound.play();
-      }
+      //    if (cleanupSlideSound.paused) {
+      //     cleanupSlideSound.play();
+      //   }
     } else {
-      cleanupSlideSound.volume = 0;
+      //   cleanupSlideSound.volume = 0;
     }
 
     lastMouseX = mouseX;
@@ -197,8 +201,8 @@ function update(dt) {
   } else {
     // Stop cleanup sound when not in cleanup mode
     if (!cleanupSlideSound.paused) {
-      cleanupSlideSound.pause();
-      cleanupSlideSound.currentTime = 0;
+      //     cleanupSlideSound.pause();
+      //    cleanupSlideSound.currentTime = 0;
     }
   }
 
@@ -223,7 +227,7 @@ function getDifferentSplashImage() {
 }
 
 const cleanupRadius = ctx.canvas.width * 0.08;
-console.log("Cleanup radius:", cleanupRadius);
+//console.log("Cleanup radius:", cleanupRadius);
 function cleanUpTraces() {
   const mouseX = input.getX();
   const mouseY = input.getY();

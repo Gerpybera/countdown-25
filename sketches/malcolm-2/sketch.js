@@ -142,36 +142,188 @@ function update(dt) {
 
 // Preload audio outside the function
 const blowStart = new Audio("./assets/AUDIO/leafblower-start.wav");
-const blowLoop = new Audio("./assets/AUDIO/leafblower-loop.wav");
+const blowLoop1 = new Audio("./assets/AUDIO/leafblower-loop.wav");
+const blowLoop2 = new Audio("./assets/AUDIO/leafblower-loop.wav");
 const blowEnd = new Audio("./assets/AUDIO/leafblower-end.wav");
-const volumne = 0.7;
-blowStart.volume = volumne;
-blowLoop.volume = volumne;
-blowEnd.volume = volumne;
+const targetVolume = 0.7;
+const fadeDuration = 50; // ms for fade transitions
+const fadeStep = 16; // ~60fps update interval
+
+blowStart.volume = 0;
+blowLoop1.volume = 0;
+blowLoop2.volume = 0;
+blowEnd.volume = targetVolume;
+
+let isBlowing = false;
+let currentLoop = 1; // Track which loop is active (1 or 2)
+let loopCheckInterval = null;
+
+function fadeIn(audio, targetVol, duration) {
+  const steps = duration / fadeStep;
+  const volumeStep = targetVol / steps;
+  let currentStep = 0;
+
+  const interval = setInterval(() => {
+    currentStep++;
+    audio.volume = Math.min(volumeStep * currentStep, targetVol);
+    if (currentStep >= steps) {
+      clearInterval(interval);
+    }
+  }, fadeStep);
+
+  return interval;
+}
+
+function fadeOut(audio, duration, callback) {
+  const steps = duration / fadeStep;
+  const startVolume = audio.volume;
+  const volumeStep = startVolume / steps;
+  let currentStep = 0;
+
+  const interval = setInterval(() => {
+    currentStep++;
+    audio.volume = Math.max(startVolume - volumeStep * currentStep, 0);
+    if (currentStep >= steps) {
+      clearInterval(interval);
+      if (callback) callback();
+    }
+  }, fadeStep);
+
+  return interval;
+}
+
+function crossFadeLoops(fromLoop, toLoop, duration) {
+  const steps = duration / fadeStep;
+  const fromStartVolume = fromLoop.volume;
+  let currentStep = 0;
+
+  toLoop.currentTime = 0;
+  toLoop.volume = 0;
+  toLoop.play();
+
+  const interval = setInterval(() => {
+    currentStep++;
+    const progress = currentStep / steps;
+    fromLoop.volume = Math.max(fromStartVolume * (1 - progress), 0);
+    toLoop.volume = Math.min(targetVolume * progress, targetVolume);
+
+    if (currentStep >= steps) {
+      clearInterval(interval);
+      fromLoop.pause();
+      fromLoop.currentTime = 0;
+    }
+  }, fadeStep);
+}
+
+const loopOverlapTime = 400; // Start next loop 450ms before current ends
+const loopFadeDuration = 200; // Faster fade for loops
+
+function startLoopMonitoring() {
+  if (loopCheckInterval) clearInterval(loopCheckInterval);
+
+  loopCheckInterval = setInterval(() => {
+    if (!isBlowing) {
+      clearInterval(loopCheckInterval);
+      loopCheckInterval = null;
+      return;
+    }
+
+    const activeLoop = currentLoop === 1 ? blowLoop1 : blowLoop2;
+    const nextLoop = currentLoop === 1 ? blowLoop2 : blowLoop1;
+
+    if (
+      activeLoop.duration &&
+      activeLoop.currentTime >= activeLoop.duration - loopOverlapTime / 1000
+    ) {
+      // Switch to the other loop
+      currentLoop = currentLoop === 1 ? 2 : 1;
+      crossFadeLoops(activeLoop, nextLoop, loopFadeDuration);
+    }
+  }, 50);
+}
 
 function playLeafBlowSound() {
-  // Only play blowStart if it's not playing AND blowLoop is not playing
-  if (input.isPressed() && blowStart.paused && blowLoop.paused) {
+  // Start blowing
+  if (input.isPressed() && !isBlowing) {
+    isBlowing = true;
     blowEnd.pause();
     blowEnd.currentTime = 0;
     blowStart.currentTime = 0;
+    blowStart.volume = 0;
     blowStart.play();
-    blowStart.addEventListener(
-      "ended",
-      () => {
-        blowStart.pause();
-        blowLoop.currentTime = 0;
-        blowLoop.loop = true;
-        blowLoop.play();
-      },
-      { once: true }
-    ); // Use once: true to prevent multiple listeners
+    fadeIn(blowStart, targetVolume, fadeDuration);
+
+    // Start crossfade to loop earlier (before blowStart ends)
+    const overlapTime = 800; // Time before end of blowStart to start loop
+    const startToLoopFade = 150; // Faster fade from start to loop
+    const checkInterval = setInterval(() => {
+      if (
+        blowStart.duration &&
+        blowStart.currentTime >= blowStart.duration - overlapTime / 1000
+      ) {
+        clearInterval(checkInterval);
+        if (isBlowing) {
+          currentLoop = 1;
+          blowLoop1.currentTime = 0;
+          blowLoop1.volume = 0;
+          blowLoop1.play();
+
+          // Crossfade from start to loop1
+          const steps = startToLoopFade / fadeStep;
+          let currentStep = 0;
+          const fromStartVolume = blowStart.volume;
+
+          const crossInt = setInterval(() => {
+            currentStep++;
+            const progress = currentStep / steps;
+            blowStart.volume = Math.max(fromStartVolume * (1 - progress), 0);
+            blowLoop1.volume = Math.min(targetVolume * progress, targetVolume);
+
+            if (currentStep >= steps) {
+              clearInterval(crossInt);
+              blowStart.pause();
+              blowStart.currentTime = 0;
+              // Start monitoring for loop crossfade
+              startLoopMonitoring();
+            }
+          }, fadeStep);
+        }
+      }
+      if (blowStart.paused || !isBlowing) {
+        clearInterval(checkInterval);
+      }
+    }, 16);
   }
-  if (input.isUp() && (!blowStart.paused || !blowLoop.paused)) {
-    blowLoop.pause();
-    blowStart.pause();
-    blowStart.currentTime = 0;
-    blowEnd.currentTime = 0;
-    blowEnd.play();
+
+  // Stop blowing
+  if (input.isUp() && isBlowing) {
+    isBlowing = false;
+
+    // Clear loop monitoring
+    if (loopCheckInterval) {
+      clearInterval(loopCheckInterval);
+      loopCheckInterval = null;
+    }
+
+    // Find which audio is playing and fade it out
+    const activeAudio = !blowLoop1.paused
+      ? blowLoop1
+      : !blowLoop2.paused
+      ? blowLoop2
+      : blowStart;
+
+    fadeOut(activeAudio, fadeDuration, () => {
+      blowLoop1.pause();
+      blowLoop1.currentTime = 0;
+      blowLoop1.volume = 0;
+      blowLoop2.pause();
+      blowLoop2.currentTime = 0;
+      blowLoop2.volume = 0;
+      blowStart.pause();
+      blowStart.currentTime = 0;
+      blowEnd.currentTime = 0;
+      blowEnd.volume = targetVolume;
+      blowEnd.play();
+    });
   }
 }

@@ -12,7 +12,7 @@ const { renderer, input, math, run, finish } = createEngine();
 const { ctx, canvas } = renderer;
 
 // SVG collision settings
-const imgGlobalSize = canvas.width / 2;
+const imgGlobalSize = canvas.height * 0.8;
 const svgScale = 1;
 
 // Initialize SVG collision after SVGs are loaded
@@ -46,18 +46,251 @@ function stopSpawning() {
 
 run(update);
 
-const leverMovingSFX = new Audio("./assets/AUDIO/lever-moving.wav");
-leverMovingSFX.volume = 0.2;
-leverMovingSFX.loop = true;
+// Lever moving with crossfade loop and velocity-based volume
+const leverMoving1 = new Audio("./assets/AUDIO/lever-moving.wav");
+const leverMoving2 = new Audio("./assets/AUDIO/lever-moving.wav");
+const leverMovingMaxVolume = 1;
+leverMoving1.volume = 0;
+leverMoving2.volume = 0;
+
+let currentLeverLoop = 1;
+let leverLoopInterval = null;
+let leverTargetVolume = 0;
+let leverCurrentVolume = 0;
+const leverOverlapTime = 1000; // Start next loop 500ms before current ends
+const leverFadeStep = 16;
+
+// Track lever movement speed
+let lastLeverY = 0;
+let leverSpeed = 0;
+
+// Track fade progress for each loop
+let lever1FadeProgress = 1; // 1 = full volume, 0 = silent
+let lever2FadeProgress = 0;
+let lever1FadingOut = false;
+let lever2FadingOut = false;
+
+function startLeverLoop() {
+  if (leverLoopInterval) return;
+
+  currentLeverLoop = 1;
+  leverMoving1.currentTime = 0;
+  leverMoving1.volume = 0;
+  leverMoving1.play();
+  lever1FadeProgress = 1;
+  lever2FadeProgress = 0;
+  lever1FadingOut = false;
+  lever2FadingOut = false;
+
+  leverLoopInterval = setInterval(() => {
+    // Smoothly interpolate current volume towards target
+    leverCurrentVolume += (leverTargetVolume - leverCurrentVolume) * 0.1;
+
+    // Update fade progress for both loops
+    const fadeSpeed = 0.02; // How fast to fade in/out
+
+    if (lever1FadingOut) {
+      lever1FadeProgress = Math.max(0, lever1FadeProgress - fadeSpeed);
+    } else if (lever1FadeProgress < 1 && !lever2FadingOut) {
+      lever1FadeProgress = Math.min(1, lever1FadeProgress + fadeSpeed);
+    }
+
+    if (lever2FadingOut) {
+      lever2FadeProgress = Math.max(0, lever2FadeProgress - fadeSpeed);
+    } else if (lever2FadeProgress < 1 && !lever1FadingOut) {
+      lever2FadeProgress = Math.min(1, lever2FadeProgress + fadeSpeed);
+    }
+
+    // Apply volumes using equal-power curve
+    const vol1 =
+      leverCurrentVolume * Math.sin((lever1FadeProgress * Math.PI) / 2);
+    const vol2 =
+      leverCurrentVolume * Math.sin((lever2FadeProgress * Math.PI) / 2);
+    leverMoving1.volume = vol1;
+    leverMoving2.volume = vol2;
+
+    // Check if loop1 needs to trigger loop2
+    if (
+      !leverMoving1.paused &&
+      leverMoving1.duration &&
+      leverMoving1.currentTime >=
+        leverMoving1.duration - leverOverlapTime / 1000 &&
+      !lever1FadingOut
+    ) {
+      lever1FadingOut = true;
+      lever2FadingOut = false;
+      lever2FadeProgress = 0;
+      leverMoving2.currentTime = 0;
+      leverMoving2.play();
+    }
+
+    // Check if loop2 needs to trigger loop1
+    if (
+      !leverMoving2.paused &&
+      leverMoving2.duration &&
+      leverMoving2.currentTime >=
+        leverMoving2.duration - leverOverlapTime / 1000 &&
+      !lever2FadingOut
+    ) {
+      lever2FadingOut = true;
+      lever1FadingOut = false;
+      lever1FadeProgress = 0;
+      leverMoving1.currentTime = 0;
+      leverMoving1.play();
+    }
+
+    // Reset loops when they finish fading out
+    if (lever1FadeProgress <= 0 && lever1FadingOut) {
+      leverMoving1.pause();
+      lever1FadingOut = false;
+    }
+    if (lever2FadeProgress <= 0 && lever2FadingOut) {
+      leverMoving2.pause();
+      lever2FadingOut = false;
+    }
+  }, leverFadeStep);
+}
+
+function stopLeverLoop() {
+  if (leverLoopInterval) {
+    clearInterval(leverLoopInterval);
+    leverLoopInterval = null;
+  }
+  leverMoving1.pause();
+  leverMoving1.currentTime = 0;
+  leverMoving1.volume = 0;
+  leverMoving2.pause();
+  leverMoving2.currentTime = 0;
+  leverMoving2.volume = 0;
+  leverCurrentVolume = 0;
+  leverTargetVolume = 0;
+  lever1FadeProgress = 1;
+  lever2FadeProgress = 0;
+  lever1FadingOut = false;
+  lever2FadingOut = false;
+}
+
+function updateLeverVolume(currentLeverPosY) {
+  // Calculate lever movement speed
+  leverSpeed = Math.abs(currentLeverPosY - lastLeverY);
+  lastLeverY = currentLeverPosY;
+
+  // Map speed to volume (0 to maxVolume)
+  leverTargetVolume = Math.min(leverSpeed / 8, leverMovingMaxVolume);
+
+  // If not moving, fade to 0
+  if (leverSpeed < 0.1) {
+    leverTargetVolume = 0;
+  }
+}
 
 const leverStopSFX = new Audio("./assets/AUDIO/lever-click.wav");
 leverStopSFX.volume = 0.3;
 
-const machineRunning = new Audio("./assets/AUDIO/machine_running.wav");
-machineRunning.volume = 0.5;
+// Machine running with crossfade loop
+const machineRunning1 = new Audio("./assets/AUDIO/machine_running.wav");
+const machineRunning2 = new Audio("./assets/AUDIO/machine_running.wav");
+const machineTargetVolume = 0.5;
+machineRunning1.volume = 0;
+machineRunning2.volume = 0;
+
+let currentMachineLoop = 1;
+let machineLoopInterval = null;
+let isMachineCrossfading = false;
+const machineOverlapTime = 400; // Start next loop 400ms before current ends
+const machineFadeDuration = 350; // Fade duration
+const machineFadeStep = 16;
+
+function startMachineLoop() {
+  if (machineLoopInterval) return; // Already running
+
+  currentMachineLoop = 1;
+  machineRunning1.currentTime = 0;
+  machineRunning1.volume = machineTargetVolume;
+  machineRunning1.play();
+
+  machineLoopInterval = setInterval(() => {
+    if (isMachineCrossfading) return;
+
+    const activeLoop =
+      currentMachineLoop === 1 ? machineRunning1 : machineRunning2;
+    const nextLoop =
+      currentMachineLoop === 1 ? machineRunning2 : machineRunning1;
+
+    if (
+      activeLoop.duration &&
+      activeLoop.currentTime >= activeLoop.duration - machineOverlapTime / 1000
+    ) {
+      isMachineCrossfading = true;
+      currentMachineLoop = currentMachineLoop === 1 ? 2 : 1;
+
+      nextLoop.currentTime = 0;
+      nextLoop.volume = 0;
+      nextLoop.play();
+
+      const steps = machineFadeDuration / machineFadeStep;
+      let currentStep = 0;
+      const fromStartVolume = activeLoop.volume;
+
+      const crossInt = setInterval(() => {
+        currentStep++;
+        const progress = currentStep / steps;
+        // Equal-power crossfade
+        const fadeOutVolume = Math.cos((progress * Math.PI) / 2);
+        const fadeInVolume = Math.sin((progress * Math.PI) / 2);
+        activeLoop.volume = fromStartVolume * fadeOutVolume;
+        nextLoop.volume = machineTargetVolume * fadeInVolume;
+
+        if (currentStep >= steps) {
+          clearInterval(crossInt);
+          activeLoop.pause();
+          activeLoop.currentTime = 0;
+          nextLoop.volume = machineTargetVolume;
+          isMachineCrossfading = false;
+        }
+      }, machineFadeStep);
+    }
+  }, 20);
+}
+
+function stopMachineLoop() {
+  if (machineLoopInterval) {
+    clearInterval(machineLoopInterval);
+    machineLoopInterval = null;
+  }
+  isMachineCrossfading = false;
+
+  // Fade out whichever is playing
+  const fadeOutAudio = !machineRunning1.paused
+    ? machineRunning1
+    : machineRunning2;
+  if (!fadeOutAudio.paused) {
+    const steps = 150 / machineFadeStep;
+    let currentStep = 0;
+    const startVol = fadeOutAudio.volume;
+
+    const fadeInt = setInterval(() => {
+      currentStep++;
+      fadeOutAudio.volume = Math.max(startVol * (1 - currentStep / steps), 0);
+      if (currentStep >= steps) {
+        clearInterval(fadeInt);
+        machineRunning1.pause();
+        machineRunning1.currentTime = 0;
+        machineRunning1.volume = 0;
+        machineRunning2.pause();
+        machineRunning2.currentTime = 0;
+        machineRunning2.volume = 0;
+      }
+    }, machineFadeStep);
+  }
+}
 
 const openingSFX = new Audio("./assets/AUDIO/open.wav");
 openingSFX.volume = 0.5;
+
+const containerFullSFX = new Audio("./assets/AUDIO/container-full.wav");
+containerFullSFX.volume = 0.5;
+let hasPlayedContainerFullSound = false;
 
 const leverGoingDownSFX = new Audio("./assets/AUDIO/lever-going-down.wav");
 leverGoingDownSFX.volume = 0.3;
@@ -213,6 +446,13 @@ function createLever() {
     document.body.style.cursor = "default";
   }
 
+  // Play sound once when container is full
+  if (hasReachedTargetBodies() && !hasPlayedContainerFullSound) {
+    containerFullSFX.currentTime = 0;
+    containerFullSFX.play();
+    hasPlayedContainerFullSound = true;
+  }
+
   if (
     leverPosY < -leverLength + circleSize + padding * 3 &&
     hasReachedTargetBodies()
@@ -293,14 +533,23 @@ function createLever() {
 
   const isAtLimit = leverPosY <= leverMinY || leverPosY >= leverMaxY;
 
-  // Lever moving sound - play when lever position changes
-  const isLeverMoving = leverPosY !== lastLeverPosY;
-  if (isLeverMoving && !isAtLimit) {
-    if (leverMovingSFX.paused) {
-      leverMovingSFX.play();
+  // Lever moving sound - continuous loop with velocity-based volume
+  if (isPullable) {
+    // Start the loop if not already running
+    if (!leverLoopInterval) {
+      startLeverLoop();
     }
+    // Update volume based on lever movement speed
+    updateLeverVolume(leverPosY);
   } else {
-    leverMovingSFX.pause();
+    // When not pulling, fade volume to 0
+    if (leverLoopInterval) {
+      leverTargetVolume = 0;
+      // Stop loop completely when volume is very low
+      if (leverCurrentVolume < 0.01) {
+        stopLeverLoop();
+      }
+    }
   }
   lastLeverPosY = leverPosY;
 
@@ -312,12 +561,13 @@ function createLever() {
   wasAtLimit = isAtLimit;
 
   if (activated) {
-    if (machineRunning.paused) {
-      machineRunning.play();
+    if (!machineLoopInterval) {
+      startMachineLoop();
     }
   } else {
-    machineRunning.pause();
-    machineRunning.currentTime = 0;
+    if (machineLoopInterval) {
+      stopMachineLoop();
+    }
   }
 }
 

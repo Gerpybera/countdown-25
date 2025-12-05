@@ -6,7 +6,7 @@ export default class FlyingObject {
     this.ctx = ctx;
     this.input = input;
     this.svg = new Path2D(d);
-    this.imgGlobalSize = this.ctx.canvas.width * 0.5; // SVG display size
+    this.imgGlobalSize = this.ctx.canvas.height * 0.9; // SVG display size
     this.scale = 1;
 
     // Get target position inside SVG

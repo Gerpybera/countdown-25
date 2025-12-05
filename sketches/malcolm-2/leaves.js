@@ -43,7 +43,7 @@ export default class Leaves {
 
     this.velocityX = 0;
     this.velocityY = 0;
-    this.imgGlobalSize = this.ctx.canvas.width * 0.8;
+    this.imgGlobalSize = this.ctx.canvas.height * 1.4;
     this.scale = 1;
     this.size = ctx.canvas.width * 0.03;
     this.mouseX = this.input.getX();
@@ -70,13 +70,21 @@ export default class Leaves {
   }
 
   isMoving() {
-    return this.getSpeed() > 0.5 || this.isFallingOff;
+    return this.getSpeed() > 0.5 || this.isFallingOff || this.isEntering;
   }
 
   getSpeed() {
     // When falling off, use the fall speed for sound volume
     if (this.isFallingOff) {
       return 5 + Math.random() * 2; // Approximate fall speed
+    }
+    // When entering, calculate speed based on entry progress
+    if (this.isEntering && !this.isWaitingToEnter) {
+      const dx = this.targetX - this.startX;
+      const dy = this.targetY - this.startY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      // Entry speed is based on progress and distance
+      return distance * this.entrySpeed * 2; // Approximate movement speed
     }
     return Math.sqrt(
       this.velocityX * this.velocityX + this.velocityY * this.velocityY

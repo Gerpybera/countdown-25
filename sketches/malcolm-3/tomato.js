@@ -14,8 +14,8 @@ export default class Tomato {
     this.rotation = 0;
     this.rotationSpeed = Math.random(-1, 1) * 0.1;
     this.randomSizeOffset = Math.random() * 50 - 20;
-    this.imgSize = this.ctx.canvas.width * 0.1; // Base size of the tomato image
-    this.imgGlobalSize = this.ctx.canvas.width * 0.6; // SVG display size
+    this.imgSize = this.ctx.canvas.height * 0.15; // Base size of the tomato image
+    this.imgGlobalSize = this.ctx.canvas.height * 0.9; // SVG display size
     this.scale = 1;
 
     // Pick a random sprite from preloaded arrays
@@ -69,7 +69,7 @@ export default class Tomato {
     }
     if (this.isMoving) {
       // Map velocity (0 to ~10) to volume (0 to 0.3), capped at 0.3
-      this.slideSFX.volume = Math.min(this.velocity / 10, 0.3);
+      this.slideSFX.volume = Math.min(this.velocity / 30, 0.05);
       this.slideSFX.play();
     } else {
       this.slideSFX.pause();
@@ -239,8 +239,9 @@ export default class Tomato {
       x: this.posX,
       y: this.posY,
       size: this.imgSize / 2,
-      alpha: 0.05,
+      alpha: 0.9,
       image: this.preloadedImages.traces[randomTraceIndex],
+      rotation: Math.random() * Math.PI * 2,
     };
 
     // Push the trace to the global traces array
