@@ -103,9 +103,26 @@ export default class Tomato {
 
     if (justBecameStuck && this.isInsideArea && !this.isCounted) {
       this.isCounted = true;
+      // Create a big splash trace when tomato lands inside
+      this.createSplashTrace();
       return true;
     }
     return false;
+  }
+
+  createSplashTrace() {
+    // Create a large trace with higher opacity at the impact point
+    const randomTraceIndex = Math.floor(
+      Math.random() * this.preloadedImages.traces.length
+    );
+    const splashTrace = {
+      x: this.posX,
+      y: this.posY,
+      size: this.imgSize * 0.6, // Much bigger than regular traces
+      alpha: 0.8, // Higher opacity
+      image: this.preloadedImages.traces[randomTraceIndex],
+    };
+    this.globalTraces.push(splashTrace);
   }
 
   createTomato(x, y) {
@@ -221,8 +238,8 @@ export default class Tomato {
     const trace = {
       x: this.posX,
       y: this.posY,
-      size: this.imgSize,
-      alpha: 0.1,
+      size: this.imgSize / 2,
+      alpha: 0.05,
       image: this.preloadedImages.traces[randomTraceIndex],
     };
 

@@ -240,6 +240,7 @@ export default class FallingObject {
         this.ctx.canvas.width * 0.02 +
         Math.random() * (this.ctx.canvas.width * 0.005);
     }
+    this.sizeOffset = Math.random() * (this.size * 1.2);
     this.color = "blue";
     this.sprite = null;
     this.randomSprite = this.getRandomSprite();
@@ -276,7 +277,7 @@ export default class FallingObject {
   draw() {
     let scaleImg;
     if (this.isATrashBag) {
-      scaleImg = this.size * 2;
+      scaleImg = this.size * 2 + this.sizeOffset;
     } else {
       scaleImg = this.size * 1;
     }
