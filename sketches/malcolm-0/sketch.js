@@ -593,7 +593,7 @@ const containerImgRight = new Image();
 containerImgRight.src = "./assets/PNG/container-right.png";
 
 function createContainer() {
-  let containerWidth = imgGlobalSize / 2;
+  let containerWidth = imgGlobalSize;
   let containerHeight = imgGlobalSize;
   const marginWidth = 0;
   const marginHeight = 50;
